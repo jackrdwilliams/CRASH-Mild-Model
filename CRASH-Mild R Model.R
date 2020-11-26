@@ -8,13 +8,13 @@ library(dplyr)
 
 
 
-treatment.effect <- 0.667
+treatment.effect <- 0.6672781
 
 treatment.effect.lci <- 0.411
 treatment.effect.uci <- 1.083
 
-hi.risk <- 9/920
-non.hi.risk <- 13/440
+hi.risk <- 13/440
+non.hi.risk <- 9/920
 
 age <- 57.73704
 
@@ -42,8 +42,8 @@ acm <- gen_acm()
 
 
 
-matrix <- matrix(0, 366, 2)
-matrix[1,] <- c(1,0)
+matrix <- matrix(0, 366, 4)
+matrix[1,] <- c(1,0,1,0)
 age_trace <- seq(from = age, to = age+1, by= 1/365)
 
 # Generate year 1 risk of death 
@@ -64,15 +64,22 @@ for(t in 2:366){
   matrix[t,2] <- matrix[t-1,2] + ((hi.risk + non.hi.risk)/28)
   matrix[t,1] <- 1 - matrix[t,2]
   
+  matrix[t,4] <- matrix[t-1,4] + ((hi.risk * treatment.effect + non.hi.risk)/28)
+  matrix[t,3] <- 1 - matrix[t,4]
+  
   } else {
     
   matrix[t,2] <- matrix[t-1,2] + matrix[t-1,1] * (1 - exp(-(risk_year1[t]/365)))
   matrix[t,1] <- 1 - matrix[t,2]
-  }
+  
+  matrix[t,4] <- matrix[t-1,4] + matrix[t-1,3] * (1 - exp(-(risk_year1[t]/365)))
+  matrix[t,3] <- 1 - matrix[t,4]
+}
   
     
 }
 
-first.year.trace <- as.data.frame(matrix)
+first.year.trace.placebo <- as.data.frame(matrix[,1:2])
+first.year.trace.txa <- as.data.frame(matrix[,1:2])
 
-
+matrix[366,]
