@@ -8,21 +8,34 @@ library(dplyr)
 
 
 
+# Options
+
+time.horizon = 60
+disc.c <- 0.035
+disc.o <- 0.035
+
+sims <- 10
+
+age <- 57.73704
+
+
 
 ## Clinical parameters
 
 treatment.effect <- 0.6672781
-
-treatment.effect.lci <- 0.411
-treatment.effect.uci <- 1.083
+treatment.effect.sims <- exp(rnorm(sims, log(treatment.effect), 0.2472015))
 
 hi.risk <- 13/440
-non.hi.risk <- 9/920
+hi.risk.sims <- rbeta(sims, 13, 440-13)
 
-age <- 57.73704
+non.hi.risk <- 9/920
+non.hi.risk.sims <- rbeta(sims, 9, 920-9)
 
 smr.year1 <- 4
+smr.year1.sims <- rnorm(sims, smr.year1, 0.41632922)
+
 smr.year2 <- 30.99/13.72
+smr.year2.sims <- rnorn(sims, smr.year2, 0.2350955) 
 
 
 
@@ -45,14 +58,10 @@ acm <- gen.acm()
 
 
 
-matrix <- matrix(0, 366, 4)
-matrix[1,] <- c(1,0,1,0)
-age.trace <- seq(from = age, to = age+1, by= 1/365)
-
-
-
 
 ## HRQoL
+
+gen.utility <- function(){
 
 utility.full <- 1
 utility.good <- 0.894
@@ -81,6 +90,56 @@ disability.txa <- c(full.txa, good.txa, moderate.txa, severe.txa, vegetative.txa
 utility.placebo <- sum(utility.values*disability.placebo)/sum(disability.placebo)
 utility.txa <- sum(utility.values*disability.txa)/sum(disability.txa)
 
+return(c(placebo = utility.placebo, 
+       txa = utility.txa))
+
+}
+
+gen.utility()
+
+
+
+gen.utility.sims <- function(){
+  
+  utility.full <- rep(1, sims)
+  utility.good <- rbeta(sims, 49.9585894, 5.9235016)
+  utility.moderate <- rbeta(sims, 30.538, 14.7034815)
+  utility.severe <- rbeta(sims, 10.9303087,	17.6830648)
+  utility.vegetative <- rnorm(sims, -0.178, 0.19) ## needs normal distribution
+  
+  utility.values <- data.frame(utility.full, utility.good, utility.moderate, utility.severe, utility.vegetative)
+  
+  full.placebo <- 0
+  good.placebo <- 1516
+  moderate.placebo <- 701
+  severe.placebo <- 227
+  vegetative.placebo <- 22
+  
+  disability.placebo <- c(full.placebo, good.placebo, moderate.placebo, severe.placebo, vegetative.placebo)
+  
+  full.txa <- 0
+  good.txa <- 1516
+  moderate.txa <- 701
+  severe.txa <- 227
+  vegetative.txa <- 22
+  
+  disability.txa <- c(full.txa, good.txa, moderate.txa, severe.txa, vegetative.txa)
+  
+  
+  util.plac <- utility.values * matrix(disability.placebo, sims, length(disability.placebo), byrow= T)
+  util.values.plac <- apply(util.plac,  1,  function(x) sum(x) / sum(disability.placebo))
+  
+  util.txa <- utility.values * matrix(disability.placebo, sims, length(disability.placebo), byrow= T)
+  util.values.txa <- apply(util.txa,  1,  function(x) sum(x) / sum(disability.placebo))
+  
+  
+  return(data.frame(placebo = util.values.plac, 
+                    txa = util.values.txa))
+  
+}
+
+gen.utility.sims()
+
 
 ## need to add utility decrements 
 
@@ -90,7 +149,8 @@ utility.txa <- sum(utility.values*disability.txa)/sum(disability.txa)
 
 ## Costs 
 
-# Treamtent costs 
+# Treatment costs 
+
 cost.txa.dose <- 6
 cost.sodium <- 0.55 + 2.7 # 55p for 100ml, 270 for 500ml 
 cost.needle <- 0.05 
@@ -98,7 +158,8 @@ cost.nurse <- 12.95
 
 cost.treatment <- sum(cost.txa.dose, cost.sodium, cost.needle, cost.nurse)
 
-# hospital costs
+
+# Hospital costs
 
 los.placebo <-  12.44828
 los.txa <- 12.44828
@@ -109,7 +170,8 @@ hospital.cost.day <- 313.8758
 hospital.cost.placebo <- hospital.cost.initial + hospital.cost.day * los.placebo
 hospital.cost.txa <- hospital.cost.initial + hospital.cost.day * los.txa
 
-# monitoring costs 
+
+# Monitoring costs 
 
 cost.good.st <- 290.145026
 cost.moderate.st <- 20745.36936
@@ -130,7 +192,15 @@ monitoring.costs.lt <- sum(c(rep(cost.good.lt,2), cost.moderate.lt, rep(cost.sev
 
 
 
+
+
 ## Year 1 trace
+
+
+matrix <- matrix(0, 366, 4)
+matrix[1,] <- c(1,0,1,0)
+age.trace <- seq(from = age, to = age+1, by= 1/365)
+
 
 # Generate year 1 risk of death 
 
@@ -165,8 +235,12 @@ for(t in 2:366){
 first.year.trace.placebo <- as.data.frame(matrix[,1:2])
 first.year.trace.txa <- as.data.frame(matrix[,3:4])
 
-tail(matrix)
 
+
+# Clinical trace 
+
+trace.matrix <- matrix(0, time.horizon + 1, 4) 
+dim(trace.matrix)
 
 
 
