@@ -549,7 +549,7 @@ utility.sims <- gen.utility.sims()
 costs.sims <- gen.costs()[[2]]
 
 
-
+inner.result <- matrix(0,inner.loops, 4)
 evppi.array <- array(0, dim = c(length(lambda), 2, outer.loops)) 
 psa.results <- matrix(0, sims, 4)
 
@@ -579,7 +579,7 @@ clin.sim <- unlist(clin.char.sims[a,])
  # this is similar to CEAC, but is NMB values. 
  # store NMB is evppi.array 
 
-  # inner.result[a,] <- apply(psa.results, 1, mean) --- wrong 
+  # inner.result <- apply(psa.results, 2, mean) # get the mean costs and outcomes from the overall PSA - check that's correct as per mean NMB 
   # nbm <- gen.nmb(inner.result)
   # evppi.array[,,b] <- as.matrix(nmb[,2:3])
 
