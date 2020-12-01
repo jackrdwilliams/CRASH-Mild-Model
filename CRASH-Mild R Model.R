@@ -13,7 +13,7 @@ library(dplyr)
 disc.c <- 0.035
 disc.o <- 0.035
 
-sims <- 10
+sims <- 1000
 
 age <- 57.73704
 time.horizon = min(60, 100-ceiling(age))
@@ -247,11 +247,11 @@ gen.costs <- function(){
   names(costs) <- cost.names
   
 
-  # sims - to be input later on (PLACEHOLDER)
+  # Simulations - to be input later on (PLACEHOLDER)
   
-  cost.treatment.sims <- rep(cost.treatment, sims)
-  hospital.cost.placebo.sims <- rep(hospital.cost.placebo, sims)
-  hospital.cost.txa.sims <- rep(hospital.cost.txa, sims)
+  cost.treatment.sims <- rep(cost.treatment, sims)  * runif(n = sims, min = 0.2, max = 2) ## PLACEHOLDER
+  hospital.cost.placebo.sims <- rep(hospital.cost.placebo, sims) * runif(n = sims, min = 0.2, max = 2) ## PLACEHOLDER
+  hospital.cost.txa.sims <- rep(hospital.cost.txa, sims) * runif(n = sims, min = 0.2, max = 2) ## PLACEHOLDER
   
   # Monitoring costs # 
   
@@ -428,7 +428,7 @@ gen.outcomes <- function(trace, util = utility, dec = utility.decrement, cost = 
 
 
 outcomes <- gen.outcomes(trace.results)
-outcomes
+
 
 ## PSA ## 
 
@@ -453,31 +453,56 @@ for(p in 1:sims){
 
 # Generate CEAC table
 
+results <- psa.results
 
 
+gen.ceac.table <- function(results){
+  
+  lambda <- seq(from = 0, to = 40000, by = 1000)
+    
+  ## CEAC ## 
+  
+  lambda.table <- matrix(lambda, ncol = length(lambda), nrow = dim(results)[1], byrow = TRUE) 
+  inmb.count <- ((results[,4] * lambda.table) - results[,3]) - ((results[,2] * lambda.table) - results[,1]) > 0 
+  
+  prob.ce <- apply(inmb.count, 2, mean) 
+  ceac.table <- data.frame(lambda, prob.ce) 
+  
+  ## EVPI ## 
+  
+  evpi.table <- matrix(lambda, ncol = length(lambda), nrow = dim(results)[1], byrow = TRUE) 
+  nmb.p <- ((results[,4] * evpi.table) - results[,3]) 
+  nmb.t <- ((results[,2] * evpi.table) - results[,1])  
+  
+  av.nmb.p <- apply(nmb.p, 2, mean)
+  av.nmb.t <- apply(nmb.t, 2, mean)
 
-psa.results
+  evpi.mat <- matrix(0, dim(results)[1], length(av.nmb.p))
+  
+  for(i in 1:ncol(nmb.p)){
+      if(av.nmb.p[i] >= av.nmb.t[i]) evpi.mat[,i] <- nmb.t[,i] - nmb.p[,i]
+      if(av.nmb.t[i] >= av.nmb.p[i]) evpi.mat[,i] <- nmb.p[,i] - nmb.t[,i]
+  }
+  
+  evpi.mat[evpi.mat<0] <- 0
+  evpi.m <- apply(evpi.mat, 2, mean)
+  
+  evpi <- data.frame(lambda, evpi.m)
 
-
-
-
-
-
-
-
-
-# extra bits
-
-trace.results[[2]]
-
-write.excel <- function(x,row.names=FALSE,col.names=TRUE,...) {
-  write.table(x,"clipboard",sep="\t",row.names=row.names,col.names=col.names,...)
+  return(list(ceac.table,
+              evpi))
+  
 }
 
-write.excel(trace.results[[2]])
- 
 
-z <- gen.outcomes(trace.results)[[2]]
 
-write.excel(d)
+ceac <- gen.ceac.table(psa.results)[[1]]
+evpi <- gen.ceac.table(psa.results)[[2]]
+
+plot(ceac)
+plot(evpi)
+
+#write.excel <- function(x,row.names=FALSE,col.names=TRUE,...) {
+#  write.table(x,"clipboard",sep="\t",row.names=row.names,col.names=col.names,...)
+#}
 
