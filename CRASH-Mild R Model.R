@@ -1,19 +1,18 @@
 
 ## CRASH-Mild - Economic model ## 
 
-
-
 if(!require(dplyr)) install.packages('dplyr')
 library(dplyr)
 
 
-
-# Options
+# Model Options
 
 disc.c <- 0.035
 disc.o <- 0.035
 
 sims <- 1000
+outer.loops <- 10
+inner.loops <- 20
 
 age <- 57.73704
 time.horizon = min(60, 100-ceiling(age))
@@ -94,6 +93,7 @@ disability.placebo <- gen.clinical.characteristics()[[3]]
 disability.txa <- gen.clinical.characteristics()[[4]]
 disability.placebo.sims <- gen.clinical.characteristics()[[5]]
 disability.txa.sims <- gen.clinical.characteristics()[[6]]
+
 
 
 ## Generate long-term risk of death
@@ -247,9 +247,9 @@ gen.costs <- function(){
 
   # Simulations - to be input later on (PLACEHOLDER)
   
-  cost.treatment.sims <- rep(cost.treatment, sims)  * runif(n = sims, min = 0.5, max = 1.5) ## PLACEHOLDER
-  hospital.cost.placebo.sims <- rep(hospital.cost.placebo, sims) * runif(n = sims, min = 0.9, max = 1.1) ## PLACEHOLDER
-  hospital.cost.txa.sims <- rep(hospital.cost.txa, sims) * runif(n = sims, min = 0.9, max = 1.1) ## PLACEHOLDER
+  cost.treatment.sims <- rep(cost.treatment, sims)  * runif(n = sims, min = 0.999, max = 1.001) ## PLACEHOLDER
+  hospital.cost.placebo.sims <- rep(hospital.cost.placebo, sims) * runif(n = sims, min = 0.999, max = 1.001) ## PLACEHOLDER
+  hospital.cost.txa.sims <- rep(hospital.cost.txa, sims) * runif(n = sims, min = 0.999, max = 1.001) ## PLACEHOLDER
   
   # Monitoring costs # 
   
@@ -443,7 +443,7 @@ for(p in 1:sims){
   utility.sim <- unlist(utility.sims[p,])
   cost.sim <- unlist(costs.sims[p,])
   
-  trace.results.sim <- gen.trace(clin.char)
+  trace.results.sim <- gen.trace(clin.sim)
   psa.results[p,] <- gen.outcomes(trace.results.sim, util = utility.sim, cost = cost.sim)[[1]] 
   
 }
@@ -498,7 +498,97 @@ ceac <- gen.ceac.table(psa.results, 100)[[1]]
 evpi <- gen.ceac.table(psa.results, 100)[[2]]
 
 
-gen.ceac.graph()
-gen.evpi.graph()
+# Graphics  - TBC (take from other sources)
+
+plot(ceac)
+plot(evpi)
+
+a <- c(1,1,1)
+b <- c(2,2,2)
+c <- c(3,3,3)
+
+z = data.frame(a, b, c)
+
+# 
+
+# calculate net benefit function 
+
+gen.nmb <- function(results){
+  
+  lambda <- seq(from = 0, to = 40000, by = 1000)
+  nmb.table <- matrix(0, nrow = length(lambda), ncol = 2, byrow = FALSE) 
+  nmb.p <- ((results[2] * lambda) - results[1])  
+  nmb.t <- ((results[4] * lambda) - results[3])
+
+  nmb.results <- data.frame(lambda, nmb.p, nmb.t) 
+  
+  return(nmb.results)
+}
+
+length(inner.result)
+results <- inner.result
+gen.nmb(inner.result)
+
+
+
+
+
+
+
+
+##   EVPPI  Clinical parameters ## 
+
+# Re-sample all 
+
+lambda <- seq(from = 0, to = 40000, by = 1000)
+
+clin.char.sims <- gen.clinical.characteristics()[[2]]
+disability.placebo.sims <- gen.clinical.characteristics()[[5]]
+disability.txa.sims <- gen.clinical.characteristics()[[6]]
+utility.sims <- gen.utility.sims()
+costs.sims <- gen.costs()[[2]]
+
+
+
+evppi.array <- array(0, dim = c(length(lambda), 2, outer.loops)) 
+psa.results <- matrix(0, sims, 4)
+
+dim(evppi.array)
+
+## 1. Select the parameter from the outer loop 
+
+for(a in outer.loops){
+
+clin.sim <- unlist(clin.char.sims[a,])
+
+# Traditional PSA, minus the parameter selected for EVPPI
+
+  for(b in 1:inner.loops){
+  
+  #clin.sim <- unlist(clin.char.sims[b,])
+  utility.sim <- unlist(utility.sims[b,])
+  cost.sim <- unlist(costs.sims[b,])
+  
+  trace.results.sim <- gen.trace(clin.sim)
+  psa.results[b,] <- gen.outcomes(trace.results.sim, util = utility.sim, cost = cost.sim)[[1]] 
+  
+  
+  }
+
+ # calcualte the average NMB of all inner loop, across each WTP 
+ # this is similar to CEAC, but is NMB values. 
+ # store NMB is evppi.array 
+
+  # inner.result[a,] <- apply(psa.results, 1, mean) --- wrong 
+  # nbm <- gen.nmb(inner.result)
+  # evppi.array[,,b] <- as.matrix(nmb[,2:3])
+
+}
+
+
+## Question 1 - re-sample in the inner loops? it shouldnt matter really 
+## Question 2 - how to store the output of the EVPPI 
+
+
 
 
