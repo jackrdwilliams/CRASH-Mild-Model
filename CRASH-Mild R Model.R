@@ -20,8 +20,6 @@ time.horizon = min(60, 100-ceiling(age))
 
 ## Age trace
 
-
-
 ## Clinical parameters
 
 gen.clinical.characteristics <- function(){
@@ -249,9 +247,9 @@ gen.costs <- function(){
 
   # Simulations - to be input later on (PLACEHOLDER)
   
-  cost.treatment.sims <- rep(cost.treatment, sims)  * runif(n = sims, min = 0.2, max = 2) ## PLACEHOLDER
-  hospital.cost.placebo.sims <- rep(hospital.cost.placebo, sims) * runif(n = sims, min = 0.2, max = 2) ## PLACEHOLDER
-  hospital.cost.txa.sims <- rep(hospital.cost.txa, sims) * runif(n = sims, min = 0.2, max = 2) ## PLACEHOLDER
+  cost.treatment.sims <- rep(cost.treatment, sims)  * runif(n = sims, min = 0.5, max = 1.5) ## PLACEHOLDER
+  hospital.cost.placebo.sims <- rep(hospital.cost.placebo, sims) * runif(n = sims, min = 0.9, max = 1.1) ## PLACEHOLDER
+  hospital.cost.txa.sims <- rep(hospital.cost.txa, sims) * runif(n = sims, min = 0.9, max = 1.1) ## PLACEHOLDER
   
   # Monitoring costs # 
   
@@ -453,12 +451,12 @@ for(p in 1:sims){
 
 # Generate CEAC table
 
-results <- psa.results
 
 
-gen.ceac.table <- function(results){
+
+gen.ceac.table <- function(results, lambda.inc = 500){
   
-  lambda <- seq(from = 0, to = 40000, by = 1000)
+  lambda <- seq(from = 0, to = 40000, by = lambda.inc)
     
   ## CEAC ## 
   
@@ -496,13 +494,11 @@ gen.ceac.table <- function(results){
 
 
 
-ceac <- gen.ceac.table(psa.results)[[1]]
-evpi <- gen.ceac.table(psa.results)[[2]]
+ceac <- gen.ceac.table(psa.results, 100)[[1]]
+evpi <- gen.ceac.table(psa.results, 100)[[2]]
 
-plot(ceac)
-plot(evpi)
 
-#write.excel <- function(x,row.names=FALSE,col.names=TRUE,...) {
-#  write.table(x,"clipboard",sep="\t",row.names=row.names,col.names=col.names,...)
-#}
+gen.ceac.graph()
+gen.evpi.graph()
+
 
