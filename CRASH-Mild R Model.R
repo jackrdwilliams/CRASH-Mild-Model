@@ -98,7 +98,6 @@ disability.placebo.sims <- gen.clinical.characteristics()[[5]]
 disability.txa.sims <- gen.clinical.characteristics()[[6]]
 
 
-
 ## Generate long-term risk of death
 
 gen.acm <- function(male = 0.5){
@@ -124,8 +123,7 @@ acm <- gen.acm()
 
 
 
-
-## HRQoL
+## Utility
 
 gen.utility <- function(dis.placebo = disability.placebo, dis.txa = disability.txa){
 
@@ -145,7 +143,6 @@ return(c(placebo = utility.placebo,
 
 }
 
-utility <- gen.utility()
 
 gen.utility.sims <- function(dis.placebo = disability.placebo, dis.txa = disability.txa){
   
@@ -170,77 +167,136 @@ gen.utility.sims <- function(dis.placebo = disability.placebo, dis.txa = disabil
   
 }
 
+
+gen.utility.dec <- function(){
+
+  a <- data.frame(seq(0, 54, 1), 0)
+  b <- data.frame(seq(55,64, 1), 0.05)
+  c <- data.frame(seq(65, 74, 1), 0.07)
+  d <- data.frame(seq(75,100, 1), 0.12)
+  colnames(a) <- c("a","b")
+  colnames(b) <- c("a","b")
+  colnames(c) <- c("a","b")
+  colnames(d) <- c("a","b")
+
+  util.dec <- rbind(a, b, c, d)
+
+  utility.decrement <- util.dec %>% filter(a >= floor(age))
+  
+  return(utility.decrement)
+  
+} 
+
+
+
+utility <- gen.utility()
+
 utility.sims <- gen.utility.sims()
 
+utility.decrement <- gen.utility.dec()
 
-## Utility decrements
 
-a <- data.frame(seq(0, 54, 1), 0)
 
-b <- data.frame(seq(55,64, 1), 0.05)
-c <- data.frame(seq(65, 74, 1), 0.07)
-d <- data.frame(seq(75,100, 1), 0.12)
-colnames(a) <- c("a","b")
-colnames(b) <- c("a","b")
-colnames(c) <- c("a","b")
-colnames(d) <- c("a","b")
-
-util.dec <- rbind(a, b, c, d)
-
-utility.decrement <- util.dec %>% filter(a >= floor(age))
 
 ## Costs 
 
 # Treatment costs 
 
-cost.txa.dose <- 6
-cost.sodium <- 0.55 + 2.7 # 55p for 100ml, 270 for 500ml 
-cost.needle <- 0.05151 
-cost.nurse <- 12.95
+gen.costs <- function(){
 
-cost.treatment <- sum(cost.txa.dose, cost.sodium, cost.needle, cost.nurse)
+  cost.txa.dose <- 6
+  cost.sodium <- 0.55 + 2.7 # 55p for 100ml, 270 for 500ml 
+  cost.needle <- 0.05151 
+  cost.nurse <- 12.95
 
+  cost.treatment <- sum(cost.txa.dose, cost.sodium, cost.needle, cost.nurse)
+  
 
-# Hospital costs
+  # Hospital costs
 
-los.placebo <-  12.44828
-los.txa <- 12.44828
+  los.placebo <-  12.44828
+  los.txa <- 12.44828
 
-hospital.cost.initial <- 455.4503
-hospital.cost.day <- 313.8758
+  hospital.cost.initial <- 455.4503
+  hospital.cost.day <- 313.8758
 
-hospital.cost.placebo <- hospital.cost.initial + hospital.cost.day * los.placebo
-hospital.cost.txa <- hospital.cost.initial + hospital.cost.day * los.txa
-
-
-# Monitoring costs 
-
-cost.good.st <- 290.145026
-cost.moderate.st <- 20745.36936
-cost.severe.st <- 40982.984929
-
-cost.good.lt <- 25.65601
-cost.moderate.lt <- 1710.40065
-cost.severe.lt <- 13362.505071
+  hospital.cost.placebo <- hospital.cost.initial + hospital.cost.day * los.placebo
+  hospital.cost.txa <- hospital.cost.initial + hospital.cost.day * los.txa
 
 
-monitoring.costs.st <- sum(c(rep(cost.good.st,2), cost.moderate.st, rep(cost.severe.st, 2)) * disability.placebo) / sum(disability.placebo)
-monitoring.costs.st <- sum(c(rep(cost.good.st,2), cost.moderate.st, rep(cost.severe.st, 2)) * disability.txa) / sum(disability.txa)
+  # Monitoring costs 
 
-monitoring.costs.lt <- sum(c(rep(cost.good.lt,2), cost.moderate.lt, rep(cost.severe.lt, 2)) * disability.placebo) / sum(disability.placebo)
-monitoring.costs.lt <- sum(c(rep(cost.good.lt,2), cost.moderate.lt, rep(cost.severe.lt, 2)) * disability.txa) / sum(disability.txa)
+  cost.good.st <- 290.145026
+  cost.moderate.st <- 20745.36936
+  cost.severe.st <- 40982.984929
 
-
-cost.names <- c("treatment", "hospital.placebo", "hospital.txa", "st.mon", "lt.mon")
-costs <- c(cost.treatment, hospital.cost.placebo, hospital.cost.txa, monitoring.costs.st, monitoring.costs.lt)
-names(costs) <- cost.names
-
-
-## Year 1 trace
+  cost.good.lt <- 25.65601
+  cost.moderate.lt <- 1710.40065
+  cost.severe.lt <- 13362.505071
 
 
+  monitoring.costs.st <- sum(c(rep(cost.good.st,2), cost.moderate.st, rep(cost.severe.st, 2)) * disability.placebo) / sum(disability.placebo)
+  monitoring.costs.st <- sum(c(rep(cost.good.st,2), cost.moderate.st, rep(cost.severe.st, 2)) * disability.txa) / sum(disability.txa)
 
-# Generate year 1 risk of death 
+  monitoring.costs.lt <- sum(c(rep(cost.good.lt,2), cost.moderate.lt, rep(cost.severe.lt, 2)) * disability.placebo) / sum(disability.placebo)
+  monitoring.costs.lt <- sum(c(rep(cost.good.lt,2), cost.moderate.lt, rep(cost.severe.lt, 2)) * disability.txa) / sum(disability.txa)
+
+
+  cost.names <- c("treatment", "hospital.placebo", "hospital.txa", "st.mon", "lt.mon")
+  costs <- c(cost.treatment, hospital.cost.placebo, hospital.cost.txa, monitoring.costs.st, monitoring.costs.lt)
+  names(costs) <- cost.names
+  
+
+  # sims - to be input later on (PLACEHOLDER)
+  
+  cost.treatment.sims <- rep(cost.treatment, sims)
+  hospital.cost.placebo.sims <- rep(hospital.cost.placebo, sims)
+  hospital.cost.txa.sims <- rep(hospital.cost.txa, sims)
+  
+  # Monitoring costs # 
+  
+  inf0607 <- 302/249.8
+  
+  cost.good.st.sims <- rgamma(sims, shape = (240^2 / 48^2), scale = 48^2 / 240 ) * inf0607
+  cost.moderate.st.sims <- rgamma(sims, shape = (17160^2 / 3432^2), scale = 3432^2 / 17160 ) * inf0607
+  cost.severe.st.sims <- rgamma(sims, shape = (33900^2 / 6780^2), scale = 6780^2 / 33900 ) * inf0607
+  
+  cost.good.lt.sims <- rgamma(sims, shape = (24^2 / 4.8^2), scale = 4.8^2 / 24 ) * inf0607
+  cost.moderate.lt.sims <- rgamma(sims, shape = (1600^2 / 320^2), scale = 320^2 / 1600 ) * inf0607
+  cost.severe.lt.sims <- rgamma(sims, shape = (12500^2 / 2500^2), scale = 2500^2 / 12500 ) * inf0607
+  
+  df.st <- data.frame(cost.good.st.sims, cost.good.st.sims, cost.moderate.st.sims, cost.severe.st.sims, cost.severe.st.sims) 
+  df.lt <- data.frame(cost.good.lt.sims, cost.good.lt.sims, cost.moderate.lt.sims, cost.severe.lt.sims, cost.severe.lt.sims)
+  
+  
+  monitoring.costs.st <- df.st * disability.placebo.sims # These are currently the same but structured in case these need to differ
+  monitoring.costs.st <- df.st * disability.txa.sims  # These are currently the same but structured in case these need to differ
+  
+  m.costs.st <- apply(monitoring.costs.st, 1, sum)
+  
+  monitoring.costs.lt <- df.lt * disability.placebo.sims  # These are currently the same but structured in case these need to differ
+  monitoring.costs.lt <- df.lt * disability.txa.sims  # These are currently the same but structured in case these need to differ
+  
+  m.costs.lt <- apply(monitoring.costs.lt, 1, sum)
+  
+  costs.sims <- data.frame(cost.treatment.sims, hospital.cost.placebo.sims, hospital.cost.txa.sims, 
+                           m.costs.st, m.costs.lt)
+  
+  colnames(costs.sims) <- cost.names
+  
+  return(list(costs,
+              costs.sims))
+  
+}
+
+
+costs <- gen.costs()[[1]]
+costs.sims <- gen.costs()[[2]]
+
+
+
+##  TRACE CALCULATIONS AND OUTCOMES  ## 
+
 
 gen.trace <- function(clinical){
 
@@ -307,29 +363,14 @@ for(t in 2:366){
 }
 
 
-# trace with deterministic
+# deterministic trace
 trace.results <- gen.trace(clin.char)
 
 
 
-# trace with probabilistic simulation
- # gen.trace(unlist(clin.char.sims[1,]))
 
 
-trace.results[[2]]
-
-write.excel <- function(x,row.names=FALSE,col.names=TRUE,...) {
-  write.table(x,"clipboard",sep="\t",row.names=row.names,col.names=col.names,...)
-}
-
-write.excel(trace.results[[2]])
- 
-
-# discount.costs = disc.c, discount.outcomes = disc.o
-
-trace = trace.results
-
-discount.c = disc.c
+## The costs in here are mostly named, but should really be changed to core components for the PSA part
 
 gen.outcomes <- function(trace, util = utility, dec = utility.decrement, cost = costs, discount.c = disc.c, discount.o = disc.o){
   
@@ -340,20 +381,19 @@ gen.outcomes <- function(trace, util = utility, dec = utility.decrement, cost = 
   
   # Costs
   
-  # for(i in 1:length(cost)) assign(names(cost[i]),cost[i])
   # cost names here: cost.names
   
   cost.matrix <- matrix(0, time.horizon + 1, 2) # placebo / txa
   
-  cost.matrix[1,] <- cost[2:3] + (cost["treatment"] * c(0,1))
-  cost.matrix[2,] <- trace[[2]][2,c(1,3)] * cost["st.mon"]
-  cost.matrix[3:(time.horizon+1),] <- trace[[2]][3:(time.horizon+1),c(1,3)] * cost["lt.mon"] 
+  cost.matrix[1,] <- cost[2:3] + (cost[1] * c(0,1)) 
+  cost.matrix[2,] <- trace[[2]][2,c(1,3)] * cost[4]
+  cost.matrix[3:(time.horizon+1),] <- trace[[2]][3:(time.horizon+1),c(1,3)] * cost[5] 
   
   cost.matrix.d <- cost.matrix * d
   
   cost.sum <- apply(cost.matrix.d, 2, sum)
   
-  
+
   # Utility
 
   utility.matrix <- matrix(0, time.horizon + 1, 2) # placebo / txa
@@ -367,22 +407,75 @@ gen.outcomes <- function(trace, util = utility, dec = utility.decrement, cost = 
   utility.matrix.d <- utility.matrix * o 
   
   utility.sum <- apply(utility.matrix.d, 2, sum) 
+
   
+  ## ICER ## 
   
-  return(list(utility = utility.sum,
-              cost = cost.sum))
+  icer <-  if((cost.sum[2] - cost.sum[1]) <= 0 & (utility.sum[2] - utility.sum[1]) > 0) "Intervention dominates" else 
+      if((cost.sum[2] - cost.sum[1]) > 0 & (utility.sum[2] - utility.sum[1]) <= 0 ) "Control dominates" else
+        (cost.sum[2] - cost.sum[1]) / (utility.sum[2] - utility.sum[1])  
+
+    
+  return(list(c(cost.placebo = cost.sum[1], 
+                utility.placebo = utility.sum[1], 
+                cost.txa = cost.sum[2], 
+                utility.txa = utility.sum[2]), 
+              icer = icer)) 
+
   
 }
 
 
 
+outcomes <- gen.outcomes(trace.results)
+outcomes
+
+## PSA ## 
+
+# Generate matrix to store results 
+psa.results <- matrix(0, sims, 4)
+colnames(psa.results) <- c("cost.placebo", "utility.placebo","cost.txa","utility.txa")
 
 
-gen.outcomes(trace.results)
+
+for(p in 1:sims){
+  
+  # Subset and assign existing sims
+  clin.sim <- unlist(clin.char.sims[p,])
+  utility.sim <- unlist(utility.sims[p,])
+  cost.sim <- unlist(costs.sims[p,])
+  
+  trace.results.sim <- gen.trace(clin.char)
+  psa.results[p,] <- gen.outcomes(trace.results.sim, util = utility.sim, cost = cost.sim)[[1]] 
+  
+}
+
+
+# Generate CEAC table
 
 
 
 
+psa.results
+
+
+
+
+
+
+
+
+
+# extra bits
+
+trace.results[[2]]
+
+write.excel <- function(x,row.names=FALSE,col.names=TRUE,...) {
+  write.table(x,"clipboard",sep="\t",row.names=row.names,col.names=col.names,...)
+}
+
+write.excel(trace.results[[2]])
+ 
 
 z <- gen.outcomes(trace.results)[[2]]
 
