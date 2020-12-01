@@ -90,9 +90,6 @@ return(list(clin.char,
 }
 
 
-gen.clinical.characteristics()
-
-
 clin.char <- gen.clinical.characteristics()[[1]]
 clin.char.sims <- gen.clinical.characteristics()[[2]]
 disability.placebo <- gen.clinical.characteristics()[[3]]
@@ -176,7 +173,7 @@ gen.utility.sims <- function(dis.placebo = disability.placebo, dis.txa = disabil
 utility.sims <- gen.utility.sims()
 
 
-## need to add utility decrements 
+## Utility decrements
 
 a <- data.frame(seq(0, 54, 1), 0)
 
@@ -188,9 +185,9 @@ colnames(b) <- c("a","b")
 colnames(c) <- c("a","b")
 colnames(d) <- c("a","b")
 
-utility.decrement <- rbind(a, b, c, d)
+util.dec <- rbind(a, b, c, d)
 
-
+utility.decrement <- util.dec %>% filter(a >= floor(age))
 
 ## Costs 
 
@@ -198,7 +195,7 @@ utility.decrement <- rbind(a, b, c, d)
 
 cost.txa.dose <- 6
 cost.sodium <- 0.55 + 2.7 # 55p for 100ml, 270 for 500ml 
-cost.needle <- 0.05 
+cost.needle <- 0.05151 
 cost.nurse <- 12.95
 
 cost.treatment <- sum(cost.txa.dose, cost.sodium, cost.needle, cost.nurse)
@@ -234,9 +231,9 @@ monitoring.costs.lt <- sum(c(rep(cost.good.lt,2), cost.moderate.lt, rep(cost.sev
 monitoring.costs.lt <- sum(c(rep(cost.good.lt,2), cost.moderate.lt, rep(cost.severe.lt, 2)) * disability.txa) / sum(disability.txa)
 
 
-
+cost.names <- c("treatment", "hospital.placebo", "hospital.txa", "st.mon", "lt.mon")
 costs <- c(cost.treatment, hospital.cost.placebo, hospital.cost.txa, monitoring.costs.st, monitoring.costs.lt)
-
+names(costs) <- cost.names
 
 
 ## Year 1 trace
@@ -319,55 +316,75 @@ trace.results <- gen.trace(clin.char)
  # gen.trace(unlist(clin.char.sims[1,]))
 
 
-trace[[2]]
+trace.results[[2]]
 
 write.excel <- function(x,row.names=FALSE,col.names=TRUE,...) {
   write.table(x,"clipboard",sep="\t",row.names=row.names,col.names=col.names,...)
 }
 
-write.excel(trace[[2]])
+write.excel(trace.results[[2]])
  
 
 # discount.costs = disc.c, discount.outcomes = disc.o
 
+trace = trace.results
 
+discount.c = disc.c
 
-
-
-gen.outcomes <- function(trace, util = utility, cost = costs){
+gen.outcomes <- function(trace, util = utility, dec = utility.decrement, cost = costs, discount.c = disc.c, discount.o = disc.o){
+  
+  # discount
+  
+  d <- matrix( rep(1/((1+discount.c)^seq(0, time.horizon, 1)),2), time.horizon + 1, 2)
+  o <- matrix( rep(1/((1+discount.o)^seq(0, time.horizon, 1)),2), time.horizon + 1, 2)
   
   # Costs
   
   # for(i in 1:length(cost)) assign(names(cost[i]),cost[i])
+  # cost names here: cost.names
   
+  cost.matrix <- matrix(0, time.horizon + 1, 2) # placebo / txa
+  
+  cost.matrix[1,] <- cost[2:3] + (cost["treatment"] * c(0,1))
+  cost.matrix[2,] <- trace[[2]][2,c(1,3)] * cost["st.mon"]
+  cost.matrix[3:(time.horizon+1),] <- trace[[2]][3:(time.horizon+1),c(1,3)] * cost["lt.mon"] 
+  
+  cost.matrix.d <- cost.matrix * d
+  
+  cost.sum <- apply(cost.matrix.d, 2, sum)
   
   
   # Utility
-  
+
   utility.matrix <- matrix(0, time.horizon + 1, 2) # placebo / txa
-  utility.matrix[2,] <- 1 # calculate utility based on first year trace
   
-  utility.matrix[3:(time.horizon+1),1] <- trace[[2]][3:(time.horizon+1),1] * util[1]
-  utility.matrix[3:(time.horizon+1),2] <- trace[[2]][3:(time.horizon+1),3] * util[2]
+  utility.matrix[2,1] <- mean(trace[[1]][(29+1):(365+1),1]) * (util[1] - dec[2,2])
+  utility.matrix[2,2] <- mean(trace[[1]][(29+1):(365+1),3]) * (util[1] - dec[2,2])
   
-  utility.sum <- apply(utility.matrix, 2, sum) 
+  utility.matrix[3:(time.horizon+1),1] <- trace[[2]][3:(time.horizon+1),1] * (util[1] - dec[3:(time.horizon+1),2]) 
+  utility.matrix[3:(time.horizon+1),2] <- trace[[2]][3:(time.horizon+1),3] * (util[2] - dec[3:(time.horizon+1),2])
   
-  return(list(utility.matrix, 
-              utility.sum))
+  utility.matrix.d <- utility.matrix * o 
+  
+  utility.sum <- apply(utility.matrix.d, 2, sum) 
+  
+  
+  return(list(utility = utility.sum,
+              cost = cost.sum))
   
 }
 
 
 
-z <- round(gen.outcomes(trace.results)[[1]],5)
-
-write.excel(z)
 
 
-
-
-## Caclulating payoffs 
+gen.outcomes(trace.results)
 
 
 
+
+
+z <- gen.outcomes(trace.results)[[2]]
+
+write.excel(d)
 
