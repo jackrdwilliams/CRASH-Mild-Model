@@ -520,20 +520,11 @@ gen.nmb <- function(results){
   nmb.p <- ((results[2] * lambda) - results[1])  
   nmb.t <- ((results[4] * lambda) - results[3])
 
-  nmb.results <- data.frame(lambda, nmb.p, nmb.t) 
+  #nmb.results <- data.frame(lambda, nmb.p, nmb.t) 
+  nmb.results <- matrix(c(lambda, nmb.p, nmb.t), length(lambda), 3, byrow=FALSE)
   
   return(nmb.results)
 }
-
-length(inner.result)
-results <- inner.result
-gen.nmb(inner.result)
-
-
-
-
-
-
 
 
 ##   EVPPI  Clinical parameters ## 
@@ -551,14 +542,16 @@ costs.sims <- gen.costs()[[2]]
 
 
 evppi.array <- array(0, dim = c(length(lambda), 2, outer.loops)) 
-psa.results <- matrix(0, sims, 4)
+psa.results <- matrix(0, inner.loops, 4)
 
-dim(evppi.array)
+
 
 ## 1. Select the parameter from the outer loop 
 
-for(a in outer.loops){
+for(a in 1:outer.loops){
 
+  #a = 1
+  
 clin.sim <- unlist(clin.char.sims[a,])
 
 # Traditional PSA, minus the parameter selected for EVPPI
@@ -579,16 +572,39 @@ clin.sim <- unlist(clin.char.sims[a,])
  # this is similar to CEAC, but is NMB values. 
  # store NMB is evppi.array 
 
-  # inner.result[a,] <- apply(psa.results, 1, mean) --- wrong 
-  # nbm <- gen.nmb(inner.result)
-  # evppi.array[,,b] <- as.matrix(nmb[,2:3])
+  #inner.result <- apply(psa.results, 1, mean) 
+  nmb <- gen.nmb(psa.results)
+  evppi.array[,,a] <- as.matrix(nmb[,2:3])
+  
 
 }
 
 
+
+# need to figure out how to run the appropriate calculations
+
+apply(evppi.array, c(1,2), mean)
+
+
+
+dim(evppi.array)
+
+evppi.array[,,1]
+
+evppi.array[,,2]
+
+evppi.array[,,3]
+
+
+
 ## Question 1 - re-sample in the inner loops? it shouldnt matter really 
 ## Question 2 - how to store the output of the EVPPI 
+head(evppi.array)
+evppi.array[,,1]
 
 
+evppi.array <- array(0, dim = c(length(lambda), 2, outer.loops)) 
+dim(evppi.array)
+evppi.array[,,1] <- as.matrix(nmb[,2:3])
 
-
+evppi.array[,,1]
