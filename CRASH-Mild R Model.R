@@ -11,11 +11,14 @@ disc.c <- 0.035
 disc.o <- 0.035
 
 sims <- 1000
-outer.loops <- 10
-inner.loops <- 20
+outer.loops <- 30
+inner.loops <- 30
 
 age <- 57.73704
 time.horizon = min(60, 100-ceiling(age))
+
+run.psa <- 0 # Option to run to PSA or skip 
+run.evppi <- 0 # Option to run the EVPPI or skip 
 
 ## Age trace
 
@@ -448,10 +451,8 @@ for(p in 1:sims){
   
 }
 
-
+head(psa.results)
 # Generate CEAC table
-
-
 
 
 gen.ceac.table <- function(results, lambda.inc = 500){
@@ -469,9 +470,10 @@ gen.ceac.table <- function(results, lambda.inc = 500){
   ## EVPI ## 
   
   evpi.table <- matrix(lambda, ncol = length(lambda), nrow = dim(results)[1], byrow = TRUE) 
-  nmb.p <- ((results[,4] * evpi.table) - results[,3]) 
-  nmb.t <- ((results[,2] * evpi.table) - results[,1])  
-  
+
+  nmb.p <- ((results[,2] * evpi.table) - results[,1])  
+  nmb.t <- ((results[,4] * evpi.table) - results[,3]) 
+    
   av.nmb.p <- apply(nmb.p, 2, mean)
   av.nmb.t <- apply(nmb.t, 2, mean)
 
@@ -503,36 +505,28 @@ evpi <- gen.ceac.table(psa.results, 100)[[2]]
 plot(ceac)
 plot(evpi)
 
-a <- c(1,1,1)
-b <- c(2,2,2)
-c <- c(3,3,3)
-
-z = data.frame(a, b, c)
-
-# 
-
-# calculate net benefit function 
-
-gen.nmb <- function(results){
-  
-  lambda <- seq(from = 0, to = 40000, by = 1000)
-  nmb.table <- matrix(0, nrow = length(lambda), ncol = 2, byrow = FALSE) 
-  nmb.p <- ((results[2] * lambda) - results[1])  
-  nmb.t <- ((results[4] * lambda) - results[3])
-
-  #nmb.results <- data.frame(lambda, nmb.p, nmb.t) 
-  nmb.results <- matrix(c(lambda, nmb.p, nmb.t), length(lambda), 3, byrow=FALSE)
-  
-  return(nmb.results)
-}
 
 
-##   EVPPI  Clinical parameters ## 
 
-# Re-sample all 
+inner.loops
 
-lambda <- seq(from = 0, to = 40000, by = 1000)
 
+
+
+
+##------------------------------##
+##           EVPPI              ## 
+##------------------------------##
+
+inner.loops <- 30
+outer.loops <- 30
+
+# Select lambda values to be considered 
+lambda <- seq(from = 0, to = 40000, by = 500)
+
+
+
+# Sample all probabilistic parameters
 clin.char.sims <- gen.clinical.characteristics()[[2]]
 disability.placebo.sims <- gen.clinical.characteristics()[[5]]
 disability.txa.sims <- gen.clinical.characteristics()[[6]]
@@ -541,70 +535,111 @@ costs.sims <- gen.costs()[[2]]
 
 
 
-evppi.array <- array(0, dim = c(length(lambda), 2, outer.loops)) 
-psa.results <- matrix(0, inner.loops, 4)
+
+gen.nmb <- function(results, lam = lambda){
+  
+
+  nmb.table <- matrix(c(lam), ncol = length(lam), nrow = dim(results)[1],  byrow = TRUE) 
+  
+  p <- ((results[,2] * nmb.table) - results[,1])  
+  t <- ((results[,4] * nmb.table) - results[,3])
+
+  nmb.p <- apply(p, 2, mean)
+  nmb.t <- apply(t, 2, mean) 
+    
+  #colnames(nmb.p) <- as.character(lam)
+  #colnames(nmb.t) <- as.character(lam)
+  
+  
+  return(list(nmb.t, nmb.p))
+  
+}
+
+
+# Generate matrices for EVPPI results to be stored in
+
+inner.results <- matrix(0, inner.loops, 4)
+
+evppi.results.placebo <- matrix(0, ncol = length(lambda), nrow = outer.loops)
+colnames(evppi.results.placebo) <- as.character(lambda)
+evppi.results.txa <- evppi.results.placebo
 
 
 
-## 1. Select the parameter from the outer loop 
+
+
+## EVPPI Loops - 'Double Monte Carlo loop method' 
+
+
+
+# evppi.start.time <- Sys.time()
+
+
+
+## EVPPI loops 
 
 for(a in 1:outer.loops){
 
-  #a = 1
-  
+## 1. Select the 'partial' parameter from the outer loop 
+
 clin.sim <- unlist(clin.char.sims[a,])
 
-# Traditional PSA, minus the parameter selected for EVPPI
 
   for(b in 1:inner.loops){
+  
+  # Select traditional parameters, minus the outer loop parameter
   
   #clin.sim <- unlist(clin.char.sims[b,])
   utility.sim <- unlist(utility.sims[b,])
   cost.sim <- unlist(costs.sims[b,])
   
   trace.results.sim <- gen.trace(clin.sim)
-  psa.results[b,] <- gen.outcomes(trace.results.sim, util = utility.sim, cost = cost.sim)[[1]] 
+  inner.results[b,] <- gen.outcomes(trace.results.sim, util = utility.sim, cost = cost.sim)[[1]] 
   
   
   }
 
- # calcualte the average NMB of all inner loop, across each WTP 
- # this is similar to CEAC, but is NMB values. 
- # store NMB is evppi.array 
+  #after each inner loop PSA, calculate the mean NMB for each tx and store the results
+  nmb <- gen.nmb(inner.results)
 
-  #inner.result <- apply(psa.results, 1, mean) 
-  nmb <- gen.nmb(psa.results)
-  evppi.array[,,a] <- as.matrix(nmb[,2:3])
+  evppi.results.placebo[a,] <- nmb[[1]]
+  evppi.results.txa[a,] <- nmb[[2]]
   
+}
+
+
+# evppi.end.time <- Sys.time()
+
+# Calculate the EVPPI 
+
+gen.evppi.results <- function(evppi.results1 = evppi.results.placebo, evppi.results2 = evppi.results.txa, lam = lambda){
+  
+  ## calculate the mean NMB for placebo and txa, at each lambda 
+  current.info1 <- apply(evppi.results1, 2, mean)
+  current.info2 <- apply(evppi.results2, 2, mean)
+
+  current.info <- pmax(current.info1, current.info2)
+
+  evppi.array <- array(0, dim = c(outer.loops, length(lam), 2))
+  evppi.array[,,1] <- evppi.results1
+  evppi.array[,,2] <- evppi.results2
+
+  perf.info.sims <- apply(evppi.array, c(1,2), max)
+  perf.info <- apply(perf.info.sims, 2, mean)
+
+  evppi.results <- c(perf.info - current.info)
+
+  evppi <- data.frame(lambda, evppi.results)
+
+  return(evppi)
 
 }
 
 
-
-# need to figure out how to run the appropriate calculations
-
-apply(evppi.array, c(1,2), mean)
+evppi <- gen.evppi.results(evppi.results.placebo, evppi.results.txa, lambda)
 
 
-
-dim(evppi.array)
-
-evppi.array[,,1]
-
-evppi.array[,,2]
-
-evppi.array[,,3]
+plot(evppi)
 
 
 
-## Question 1 - re-sample in the inner loops? it shouldnt matter really 
-## Question 2 - how to store the output of the EVPPI 
-head(evppi.array)
-evppi.array[,,1]
-
-
-evppi.array <- array(0, dim = c(length(lambda), 2, outer.loops)) 
-dim(evppi.array)
-evppi.array[,,1] <- as.matrix(nmb[,2:3])
-
-evppi.array[,,1]
