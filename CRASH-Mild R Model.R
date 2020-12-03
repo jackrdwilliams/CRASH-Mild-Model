@@ -2,8 +2,10 @@
 ## CRASH-Mild - Economic model ## 
 
 if(!require(dplyr)) install.packages('dplyr')
-library(dplyr)
+if(!require(ggplot2)) install.packages('ggplot2')
 
+library(dplyr)
+library(ggplot2)
 
 # Model Options
 
@@ -17,8 +19,7 @@ inner.loops <- 30
 age <- 57.73704
 time.horizon = min(60, 100-ceiling(age))
 
-run.psa <- 0 # Option to run to PSA or skip 
-run.evppi <- 0 # Option to run the EVPPI or skip 
+
 
 ## Age trace
 
@@ -451,9 +452,9 @@ for(p in 1:sims){
   
 }
 
-head(psa.results)
-# Generate CEAC table
 
+
+# Generate CEAC table
 
 gen.ceac.table <- function(results, lambda.inc = 500){
   
@@ -502,14 +503,59 @@ evpi <- gen.ceac.table(psa.results, 100)[[2]]
 
 # Graphics  - TBC (take from other sources)
 
-plot(ceac)
-plot(evpi)
 
 
 
+# CEAC # 
 
-inner.loops
+gen.ceac.graph = function(psa, save = FALSE) {
+  
+  z = ggplot(psa) + geom_line(aes(x=lambda, y=prob.ce), size=0.6) + 
+    labs(x = "Willingness to pay (£)", text = element_text(size=4)) + 
+    labs (y = "Probability cost-effective", text = element_text(size=4)) + theme_classic() +
+    theme(legend.title = element_blank(), axis.title=element_text(face="bold"), 
+          axis.title.x = element_text(margin = margin(t = 7, r = 0, b = 3, l = 0)), 
+          axis.title.y = element_text(margin = margin(t = 0, r = 7, b = 0, l = 3)), 
+          panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+          legend.key.width=unit(1.8,"line"), text = element_text(size=7),
+          plot.margin=unit(c(1.2,0.5,0,1.2),"cm")) + 
+    scale_x_continuous(labels = scales::comma, breaks = c(seq(0,100000,5000)), limits = c(0,40000), expand = c(0, 0.1)) + 
+    scale_y_continuous(limits = c(0,1), breaks=seq(0,1,0.1), expand = c(0, 0)) + 
+    geom_vline(xintercept = 20000, linetype="dotted", size=0.25)
+  
+  
+  if(save == TRUE) ggsave(paste("figures\\CEAC",Sys.Date(),".png"), z, width=107, height=70, dpi=300, units='mm')
+  
+  
+  return(z)
+  
+}
 
+gen.evpi.graph = function(evpi, save = FALSE) {
+  
+  z = ggplot(evpi) + geom_line(aes(x=lambda, y=evpi.m), size=0.6) + 
+    labs(x = "Willingness to pay (£)", text = element_text(size=4)) + 
+    labs (y = "EVPI (£)", text = element_text(size=4)) + theme_classic() +
+    theme(legend.title = element_blank(), axis.title=element_text(face="bold"), 
+          axis.title.x = element_text(margin = margin(t = 7, r = 0, b = 3, l = 0)), 
+          axis.title.y = element_text(margin = margin(t = 0, r = 7, b = 0, l = 3)), 
+          panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+          legend.key.width=unit(1.8,"line"), text = element_text(size=7),
+          plot.margin=unit(c(1.2,0.5,0,1.2),"cm")) + 
+    scale_x_continuous(labels = scales::comma, breaks = c(seq(0,100000,5000)), limits = c(0,40000), expand = c(0, 0.1)) + 
+    scale_y_continuous(expand = c(0, 0)) + 
+    geom_vline(xintercept = 20000, linetype="dotted", size=0.25)
+  
+  if(save == TRUE) ggsave(paste("figures\\EVPI",Sys.Date(),".png"), z, width=107, height=70, dpi=300, units='mm')
+  
+  return(z)
+  
+}
+
+
+
+gen.ceac.graph(ceac)
+gen.evpi.graph(evpi)
 
 
 
@@ -518,8 +564,8 @@ inner.loops
 ##           EVPPI              ## 
 ##------------------------------##
 
-inner.loops <- 30
-outer.loops <- 30
+inner.loops <- 300
+outer.loops <- 300
 
 # Select lambda values to be considered 
 lambda <- seq(from = 0, to = 40000, by = 500)
@@ -639,7 +685,31 @@ gen.evppi.results <- function(evppi.results1 = evppi.results.placebo, evppi.resu
 evppi <- gen.evppi.results(evppi.results.placebo, evppi.results.txa, lambda)
 
 
-plot(evppi)
 
+
+gen.evppi.graph = function(evppi, save = FALSE) {
+  
+  z = ggplot(evppi) + geom_line(aes(x=lambda, y=evppi.results), size=0.6) + 
+    labs(x = "Willingness to pay (£)", text = element_text(size=4)) + 
+    labs (y = "EVPPI (£)", text = element_text(size=4)) + theme_classic() +
+    theme(legend.title = element_blank(), axis.title=element_text(face="bold"), 
+          axis.title.x = element_text(margin = margin(t = 7, r = 0, b = 3, l = 0)), 
+          axis.title.y = element_text(margin = margin(t = 0, r = 7, b = 0, l = 3)), 
+          panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+          legend.key.width=unit(1.8,"line"), text = element_text(size=7),
+          plot.margin=unit(c(1.2,0.5,0,1.2),"cm")) + 
+    scale_x_continuous(labels = scales::comma, breaks = c(seq(0,100000,5000)), limits = c(0,40000), expand = c(0, 0.1)) + 
+    scale_y_continuous(expand = c(0, 0)) + 
+    geom_vline(xintercept = 20000, linetype="dotted", size=0.25)
+  
+
+  
+  if(save == TRUE) ggsave(paste("figures\\EVPPI",Sys.Date(),".png"), z, width=107, height=70, dpi=300, units='mm')
+  
+  return(z)  
+  
+}
+
+gen.evppi.graph(evppi)
 
 
