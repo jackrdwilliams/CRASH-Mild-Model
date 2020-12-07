@@ -17,6 +17,7 @@ outer.loops <- 30
 inner.loops <- 30
 
 age <- 57.73704
+male = 0.5 # plaecholder
 time.horizon = min(60, 100-ceiling(age))
 
 
@@ -76,7 +77,7 @@ names(disability.txa) <- outcome.names
 
 # Dirichlet distributions for outcomes
 disability.placebo.sims <- MCMCpack::rdirichlet(n = sims , disability.placebo)
-disability.txa.sims <- MCMCpack::rdirichlet(n = sims , disability.placebo)
+disability.txa.sims <- MCMCpack::rdirichlet(n = sims , disability.txa)
 
 colnames(disability.placebo.sims) <- outcome.names
 colnames(disability.txa.sims) <- outcome.names
@@ -112,8 +113,6 @@ gen.acm <- function(male = 0.5){
 
   acm <- av %>% filter(x >= floor(age))
   colnames(acm) <- c("age", "rate")
-  
-
   
   return(acm)
   
@@ -204,7 +203,9 @@ utility.decrement <- gen.utility.dec()
 
 # Treatment costs 
 
-gen.costs <- function(){
+
+
+gen.costs <- function(dis.plac, dis.txa, dis.plac.sims, dis.txa.sims){
 
   cost.txa.dose <- 6
   cost.sodium <- 0.55 + 2.7 # 55p for 100ml, 270 for 500ml 
@@ -237,11 +238,11 @@ gen.costs <- function(){
   cost.severe.lt <- 13362.505071
 
 
-  monitoring.costs.st <- sum(c(rep(cost.good.st,2), cost.moderate.st, rep(cost.severe.st, 2)) * disability.placebo) / sum(disability.placebo)
-  monitoring.costs.st <- sum(c(rep(cost.good.st,2), cost.moderate.st, rep(cost.severe.st, 2)) * disability.txa) / sum(disability.txa)
+  monitoring.costs.st <- sum(c(rep(cost.good.st,2), cost.moderate.st, rep(cost.severe.st, 2)) * dis.plac) / sum(dis.plac)
+  monitoring.costs.st <- sum(c(rep(cost.good.st,2), cost.moderate.st, rep(cost.severe.st, 2)) * dis.txa) / sum(dis.txa)
 
-  monitoring.costs.lt <- sum(c(rep(cost.good.lt,2), cost.moderate.lt, rep(cost.severe.lt, 2)) * disability.placebo) / sum(disability.placebo)
-  monitoring.costs.lt <- sum(c(rep(cost.good.lt,2), cost.moderate.lt, rep(cost.severe.lt, 2)) * disability.txa) / sum(disability.txa)
+  monitoring.costs.lt <- sum(c(rep(cost.good.lt,2), cost.moderate.lt, rep(cost.severe.lt, 2)) * dis.plac) / sum(dis.plac)
+  monitoring.costs.lt <- sum(c(rep(cost.good.lt,2), cost.moderate.lt, rep(cost.severe.lt, 2)) * dis.txa) / sum(dis.txa)
 
 
   cost.names <- c("treatment", "hospital.placebo", "hospital.txa", "st.mon", "lt.mon")
@@ -271,13 +272,13 @@ gen.costs <- function(){
   df.lt <- data.frame(cost.good.lt.sims, cost.good.lt.sims, cost.moderate.lt.sims, cost.severe.lt.sims, cost.severe.lt.sims)
   
   
-  monitoring.costs.st <- df.st * disability.placebo.sims # These are currently the same but structured in case these need to differ
-  monitoring.costs.st <- df.st * disability.txa.sims  # These are currently the same but structured in case these need to differ
+  monitoring.costs.st <- df.st * dis.plac.sims # These are currently the same but structured in case these need to differ
+  monitoring.costs.st <- df.st * dis.txa.sims  # These are currently the same but structured in case these need to differ
   
   m.costs.st <- apply(monitoring.costs.st, 1, sum)
   
-  monitoring.costs.lt <- df.lt * disability.placebo.sims  # These are currently the same but structured in case these need to differ
-  monitoring.costs.lt <- df.lt * disability.txa.sims  # These are currently the same but structured in case these need to differ
+  monitoring.costs.lt <- df.lt * dis.plac.sims  # These are currently the same but structured in case these need to differ
+  monitoring.costs.lt <- df.lt * dis.txa.sims  # These are currently the same but structured in case these need to differ
   
   m.costs.lt <- apply(monitoring.costs.lt, 1, sum)
   
@@ -292,8 +293,8 @@ gen.costs <- function(){
 }
 
 
-costs <- gen.costs()[[1]]
-costs.sims <- gen.costs()[[2]]
+costs <- gen.costs(disability.placebo, disability.txa, disability.placebo.sims, disability.txa.sims)[[1]]
+costs.sims <- gen.costs(disability.placebo, disability.txa, disability.placebo.sims, disability.txa.sims)[[2]]
 
 
 
@@ -564,8 +565,8 @@ gen.evpi.graph(evpi)
 ##           EVPPI              ## 
 ##------------------------------##
 
-inner.loops <- 300
-outer.loops <- 300
+# inner.loops <- 300
+# outer.loops <- 300
 
 # Select lambda values to be considered 
 lambda <- seq(from = 0, to = 40000, by = 500)
@@ -577,7 +578,7 @@ clin.char.sims <- gen.clinical.characteristics()[[2]]
 disability.placebo.sims <- gen.clinical.characteristics()[[5]]
 disability.txa.sims <- gen.clinical.characteristics()[[6]]
 utility.sims <- gen.utility.sims()
-costs.sims <- gen.costs()[[2]]
+costs.sims <- gen.costs(disability.placebo, disability.txa, disability.placebo.sims, disability.txa.sims)[[2]]
 
 
 
@@ -641,7 +642,6 @@ clin.sim <- unlist(clin.char.sims[a,])
   
   trace.results.sim <- gen.trace(clin.sim)
   inner.results[b,] <- gen.outcomes(trace.results.sim, util = utility.sim, cost = cost.sim)[[1]] 
-  
   
   }
 
