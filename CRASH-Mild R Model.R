@@ -619,7 +619,7 @@ evppi.results.txa <- evppi.results.placebo
 
 
 
-# evppi.start.time <- Sys.time()
+evppi.start.time <- Sys.time()
 
 
 
@@ -654,7 +654,7 @@ clin.sim <- unlist(clin.char.sims[a,])
 }
 
 
-# evppi.end.time <- Sys.time()
+evppi.end.time <- Sys.time()
 
 # Calculate the EVPPI 
 
@@ -713,3 +713,4 @@ gen.evppi.graph = function(evppi, save = FALSE) {
 gen.evppi.graph(evppi)
 
 
+evppi.end.time - evppi.start.time
