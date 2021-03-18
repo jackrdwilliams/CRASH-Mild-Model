@@ -16,7 +16,7 @@ sims <- 1000
 outer.loops <- 30
 inner.loops <- 30
 
-age <- 57.73704
+age <- 70
 male = 0.5 # plaecholder
 time.horizon = min(60, 100-ceiling(age))
 
@@ -28,19 +28,20 @@ time.horizon = min(60, 100-ceiling(age))
 
 gen.clinical.characteristics <- function(){
 
-treatment.effect <- 0.6672781
+treatment.effect <- 1
 treatment.effect.sims <- exp(rnorm(sims, log(treatment.effect), 0.2472015))
 
-hi.risk <- 13/440
-hi.risk.sims <- rbeta(sims, 13, 440-13)
+hi.risk <- 0.0142
+hi.risk.sims <- rbeta(sims, 16.74564893, 1162.525402)
 
-non.hi.risk <- 9/920
-non.hi.risk.sims <- rbeta(sims, 9, 920-9)
 
-smr.year1 <- 4
+non.hi.risk <- 0
+non.hi.risk.sims <- rbeta(sims, 9, 920-9) * 0
+
+smr.year1 <- 235.04/81.2
 smr.year1.sims <- rnorm(sims, smr.year1, 0.41632922)
 
-smr.year2 <- 30.99/13.72
+smr.year2 <- 61.47/39.45
 smr.year2.sims <- rnorm(sims, smr.year2, 0.2350955) 
 
 clin.names <- c("treatment.effect", "hi.risk", "non.hi.risk", "smr.year1", "smr.year2")
@@ -57,20 +58,21 @@ colnames(clin.char.sims) <- clin.names
 outcome.names <- c("full", "good", "moderate", "severe", "vegetative")
 
 full.placebo <- 0
-good.placebo <- 1516
-moderate.placebo <- 701
-severe.placebo <- 227
-vegetative.placebo <- 22
+good.placebo <- 208
+moderate.placebo <- 49
+severe.placebo <- 23
+vegetative.placebo <- 5
 
 disability.placebo <- c(full.placebo, good.placebo, moderate.placebo, severe.placebo, vegetative.placebo)
 
-full.txa <- 0
-good.txa <- 1516
-moderate.txa <- 701
-severe.txa <- 227
-vegetative.txa <- 22
+# full.txa <- 0
+# good.txa <- 1516
+# moderate.txa <- 701
+# severe.txa <- 227
+# vegetative.txa <- 22
 
-disability.txa <- c(full.txa, good.txa, moderate.txa, severe.txa, vegetative.txa)
+#disability.txa <- c(full.txa, good.txa, moderate.txa, severe.txa, vegetative.txa)
+disability.txa <- disability.placebo
 
 names(disability.placebo) <- outcome.names
 names(disability.txa) <- outcome.names
@@ -203,7 +205,7 @@ utility.decrement <- gen.utility.dec()
 
 # Treatment costs 
 
-
+## need to add tx effect costs
 
 gen.costs <- function(dis.plac, dis.txa, dis.plac.sims, dis.txa.sims){
 
@@ -217,14 +219,16 @@ gen.costs <- function(dis.plac, dis.txa, dis.plac.sims, dis.txa.sims){
 
   # Hospital costs
 
-  los.placebo <-  12.44828
-  los.txa <- 12.44828
-
+  los.placebo <-  4
+  los.txa <- los.placebo
+  prop.neuro <- 0.0345
+  
   hospital.cost.initial <- 455.4503
   hospital.cost.day <- 313.8758
+  neurosurgery.cost <- 7439.8644
 
-  hospital.cost.placebo <- hospital.cost.initial + hospital.cost.day * los.placebo
-  hospital.cost.txa <- hospital.cost.initial + hospital.cost.day * los.txa
+  hospital.cost.placebo <- hospital.cost.initial + hospital.cost.day * los.placebo + prop.neuro
+  hospital.cost.txa <- hospital.cost.initial + hospital.cost.day * los.txa + prop.neuro
 
 
   # Monitoring costs 
@@ -307,36 +311,36 @@ gen.trace <- function(clinical){
   for(i in 1:length(clinical)) assign(names(clinical[i]),clinical[i])
   
   trace.names <- c("alive placebo", "dead placebo", "alive txa", "dead txa")
-  matrix <- matrix(0, 366, 4)
+  matrix <- matrix(0, 13, 4)
   matrix[1,] <- c(1,0,1,0)
   colnames(matrix) <- trace.names
 
   # Calculate the annual risk of death, and make sure it changes at correct point 
-  age.trace <- seq(from = age, to = age+1, by= 1/365)
+  age.trace <- seq(from = age, to = age+1, by= 1/12)
   age.trace.floor <- floor(age.trace)
   a <- as.vector(acm %>% filter(age == unique(age.trace.floor)[[1]])) 
   b <- as.vector(acm %>% filter(age == unique(age.trace.floor)[[2]]))
   risk.year1 <- c( rep(a[[2]], sum(age.trace.floor==a[[1]])), rep(b[[2]], sum(age.trace.floor==b[[1]])))
 
 
-# Calculate the first year Markov trace (first 28 days vs. rest of year below)
+# Calculate the first year Markov trace
 
-for(t in 2:366){
+for(t in 2:13){
   
-  if(t<=28+1){
+  if(t==2){
   
-  matrix[t,2] <- matrix[t-1,2] + ((hi.risk + non.hi.risk)/28)
+  matrix[t,2] <- matrix[t-1,2] + (hi.risk + non.hi.risk)
   matrix[t,1] <- 1 - matrix[t,2]
   
-  matrix[t,4] <- matrix[t-1,4] + ((hi.risk * treatment.effect + non.hi.risk)/28)
+  matrix[t,4] <- matrix[t-1,4] + (hi.risk * treatment.effect + non.hi.risk)
   matrix[t,3] <- 1 - matrix[t,4]
   
   } else {
     
-  matrix[t,2] <- matrix[t-1,2] + matrix[t-1,1] * (1 - exp(-((risk.year1[t]/365)*smr.year1)))
+  matrix[t,2] <- matrix[t-1,2] + matrix[t-1,1] * (1 - exp(-((risk.year1[t]/12)*smr.year1)))
   matrix[t,1] <- 1 - matrix[t,2]
   
-  matrix[t,4] <- matrix[t-1,4] + matrix[t-1,3] * (1 - exp(-((risk.year1[t]/365)*smr.year1)))
+  matrix[t,4] <- matrix[t-1,4] + matrix[t-1,3] * (1 - exp(-((risk.year1[t]/12)*smr.year1)))
   matrix[t,3] <- 1 - matrix[t,4]
   }
   
@@ -401,8 +405,8 @@ gen.outcomes <- function(trace, util = utility, dec = utility.decrement, cost = 
 
   utility.matrix <- matrix(0, time.horizon + 1, 2) # placebo / txa
   
-  utility.matrix[2,1] <- mean(trace[[1]][(29+1):(365+1),1]) * (util[1] - dec[2,2])
-  utility.matrix[2,2] <- mean(trace[[1]][(29+1):(365+1),3]) * (util[1] - dec[2,2])
+  utility.matrix[2,1] <- mean(trace[[1]][2:13,1]) * (util[1] - dec[2,2])
+  utility.matrix[2,2] <- mean(trace[[1]][2:13,3]) * (util[1] - dec[2,2])
   
   utility.matrix[3:(time.horizon+1),1] <- trace[[2]][3:(time.horizon+1),1] * (util[1] - dec[3:(time.horizon+1),2]) 
   utility.matrix[3:(time.horizon+1),2] <- trace[[2]][3:(time.horizon+1),3] * (util[2] - dec[3:(time.horizon+1),2])
@@ -427,8 +431,6 @@ gen.outcomes <- function(trace, util = utility, dec = utility.decrement, cost = 
 
   
 }
-
-
 
 outcomes <- gen.outcomes(trace.results)
 
