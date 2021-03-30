@@ -2,8 +2,10 @@
 ## CRASH-Mild - Economic model ## 
 
 if(!require(dplyr)) install.packages('dplyr')
+if(!require(tidyr)) install.packages('tidyr')
 if(!require(ggplot2)) install.packages('ggplot2')
 
+library(tidyr)
 library(dplyr)
 library(ggplot2)
 
@@ -13,8 +15,8 @@ disc.c <- 0.035
 disc.o <- 0.035
 
 sims <- 1000
-outer.loops <- 30
-inner.loops <- 30
+outer.loops <- 100
+inner.loops <- 100
 
 age <- 70
 male = 0.5 # plaecholder
@@ -28,12 +30,12 @@ time.horizon = min(60, 100-ceiling(age))
 
 gen.clinical.characteristics <- function(){
 
-treatment.effect <- 1
-treatment.effect.sims <- exp(rnorm(sims, log(treatment.effect), 0.2472015))
+# Mild ACM RR (CRASH-3)
+treatment.effect <- 0.6972504
+treatment.effect.sims <- exp(rnorm(sims, log(treatment.effect), 0.2216285))
 
 hi.risk <- 0.0142
 hi.risk.sims <- rbeta(sims, 16.74564893, 1162.525402)
-
 
 non.hi.risk <- 0
 non.hi.risk.sims <- rbeta(sims, 9, 920-9) * 0
@@ -102,7 +104,6 @@ disability.placebo.sims <- gen.clinical.characteristics()[[5]]
 disability.txa.sims <- gen.clinical.characteristics()[[6]]
 
 
-
 ## Generate long-term risk of death
 
 gen.acm <- function(male = 0.5){
@@ -121,8 +122,6 @@ gen.acm <- function(male = 0.5){
 }
 
 acm <- gen.acm()
-
-
 
 
 
@@ -158,11 +157,13 @@ gen.utility.sims <- function(dis.placebo = disability.placebo, dis.txa = disabil
   utility.values <- data.frame(utility.full, utility.good, utility.moderate, utility.severe, utility.vegetative)
   
   
-  util.plac <- utility.values * matrix(dis.placebo, sims, length(dis.placebo), byrow= T)
-  util.values.plac <- apply(util.plac,  1,  function(x) sum(x) / sum(dis.placebo))
+#  util.plac <- utility.values * matrix(dis.placebo, sims, length(dis.placebo), byrow= T)
+  util.plac <- utility.values * dis.placebo
+  util.values.plac <- apply(util.plac,  1,  sum )
   
-  util.txa <- utility.values * matrix(dis.txa, sims, length(dis.txa), byrow= T)
-  util.values.txa <- apply(util.txa,  1,  function(x) sum(x) / sum(dis.txa))
+#  util.txa <- utility.values * matrix(dis.txa, sims, length(dis.txa), byrow= T)
+  util.txa <- utility.values * dis.txa
+  util.values.txa <- apply(util.txa,  1,  sum)
   
   
   return(data.frame(placebo = util.values.plac, 
@@ -194,10 +195,9 @@ gen.utility.dec <- function(){
 
 utility <- gen.utility()
 
-utility.sims <- gen.utility.sims()
+utility.sims <- gen.utility.sims(disability.placebo.sims, disability.placebo.sims)
 
 utility.decrement <- gen.utility.dec()
-
 
 
 
@@ -225,10 +225,10 @@ gen.costs <- function(dis.plac, dis.txa, dis.plac.sims, dis.txa.sims){
   
   hospital.cost.initial <- 455.4503
   hospital.cost.day <- 313.8758
-  neurosurgery.cost <- 7439.8644
+  neurosurgery.cost <- 7439.864357
 
-  hospital.cost.placebo <- hospital.cost.initial + hospital.cost.day * los.placebo + prop.neuro
-  hospital.cost.txa <- hospital.cost.initial + hospital.cost.day * los.txa + prop.neuro
+  hospital.cost.placebo <- hospital.cost.initial + hospital.cost.day * los.placebo + prop.neuro * neurosurgery.cost
+  hospital.cost.txa <- hospital.cost.initial + hospital.cost.day * los.txa + prop.neuro * neurosurgery.cost
 
 
   # Monitoring costs 
@@ -256,9 +256,11 @@ gen.costs <- function(dis.plac, dis.txa, dis.plac.sims, dis.txa.sims){
 
   # Simulations - to be input later on (PLACEHOLDER)
   
-  cost.treatment.sims <- rep(cost.treatment, sims)  * runif(n = sims, min = 0.999, max = 1.001) ## PLACEHOLDER
-  hospital.cost.placebo.sims <- rep(hospital.cost.placebo, sims) * runif(n = sims, min = 0.999, max = 1.001) ## PLACEHOLDER
-  hospital.cost.txa.sims <- rep(hospital.cost.txa, sims) * runif(n = sims, min = 0.999, max = 1.001) ## PLACEHOLDER
+  prob.neuro.sims <- rbeta(sims, 23.83398, 	667.00607)
+  
+  cost.treatment.sims <- rep(cost.treatment, sims)  * 1 ## PLACEHOLDER
+  hospital.cost.placebo.sims <- rep(hospital.cost.placebo, sims) * 1 + rep(neurosurgery.cost, sims) * prob.neuro.sims  ## PLACEHOLDER
+  hospital.cost.txa.sims <- rep(hospital.cost.txa, sims) * 1 + rep(neurosurgery.cost, sims) * prob.neuro.sims ## PLACEHOLDER
   
   # Monitoring costs # 
   
@@ -455,8 +457,11 @@ for(p in 1:sims){
   
 }
 
-
-
+inc.costs <- psa.results[,3] - psa.results[,1]
+inc.qaly <- psa.results[,4] - psa.results[,2]
+icer <- inc.costs / inc.qaly
+  
+head(psa.results)
 # Generate CEAC table
 
 gen.ceac.table <- function(results, lambda.inc = 500){
@@ -571,7 +576,7 @@ gen.evpi.graph(evpi)
 # outer.loops <- 300
 
 # Select lambda values to be considered 
-lambda <- seq(from = 0, to = 40000, by = 500)
+lambda <- seq(from = 0, to = 30000, by = 500)
 
 
 
@@ -613,52 +618,7 @@ evppi.results.placebo <- matrix(0, ncol = length(lambda), nrow = outer.loops)
 colnames(evppi.results.placebo) <- as.character(lambda)
 evppi.results.txa <- evppi.results.placebo
 
-
-
-
-
-## EVPPI Loops - 'Double Monte Carlo loop method' 
-
-
-
-evppi.start.time <- Sys.time()
-
-
-
-## EVPPI loops 
-
-for(a in 1:outer.loops){
-
-## 1. Select the 'partial' parameter from the outer loop 
-
-clin.sim <- unlist(clin.char.sims[a,])
-
-
-  for(b in 1:inner.loops){
-  
-  # Select traditional parameters, minus the outer loop parameter
-  
-  #clin.sim <- unlist(clin.char.sims[b,])
-  utility.sim <- unlist(utility.sims[b,])
-  cost.sim <- unlist(costs.sims[b,])
-  
-  trace.results.sim <- gen.trace(clin.sim)
-  inner.results[b,] <- gen.outcomes(trace.results.sim, util = utility.sim, cost = cost.sim)[[1]] 
-  
-  }
-
-  #after each inner loop PSA, calculate the mean NMB for each tx and store the results
-  nmb <- gen.nmb(inner.results)
-
-  evppi.results.placebo[a,] <- nmb[[1]]
-  evppi.results.txa[a,] <- nmb[[2]]
-  
-}
-
-
-evppi.end.time <- Sys.time()
-
-# Calculate the EVPPI 
+# EVPPI functions
 
 gen.evppi.results <- function(evppi.results1 = evppi.results.placebo, evppi.results2 = evppi.results.txa, lam = lambda){
   
@@ -684,14 +644,158 @@ gen.evppi.results <- function(evppi.results1 = evppi.results.placebo, evppi.resu
 }
 
 
-evppi <- gen.evppi.results(evppi.results.placebo, evppi.results.txa, lambda)
 
 
 
+
+## EVPPI Loops - 'Double Monte Carlo loop method' 
+
+
+
+## EVPPI loops - Head injury and TXA treatment effect
+
+for(a in 1:outer.loops){
+
+## 1. Select the 'partial' parameter from the outer loop 
+clin.sim <- unlist(clin.char.sims[a,])
+
+  for(b in 1:inner.loops){
+  
+  # Select traditional parameters, minus the outer loop parameter
+  
+  #clin.sim <- unlist(clin.char.sims[b,])
+  clin.sim[4:5] <- unlist(clin.char.sims[b,4:5]) # Keep SMRs in PSA 
+  utility.sim <- unlist(utility.sims[b,])
+  cost.sim <- unlist(costs.sims[b,])
+  
+  trace.results.sim <- gen.trace(clin.sim)
+  inner.results[b,] <- gen.outcomes(trace.results.sim, util = utility.sim, cost = cost.sim)[[1]] 
+  }
+
+  #after each inner loop PSA, calculate the mean NMB for each tx and store the results
+  nmb <- gen.nmb(inner.results)
+  evppi.results.placebo[a,] <- nmb[[1]]
+  evppi.results.txa[a,] <- nmb[[2]]
+  
+}
+
+# Calculate the EVPPI 
+evppi.head.injury <- gen.evppi.results(evppi.results.placebo, evppi.results.txa, lambda)
+
+
+
+
+## EVPPI loops - Head injury and TXA treatment effect
+
+for(a in 1:outer.loops){
+  
+  ## 1. Select the 'partial' parameter from the outer loop 
+  clin.sim <- unlist(clin.char.sims[a,])
+  
+  for(b in 1:inner.loops){
+    
+    # Select traditional parameters, minus the outer loop parameter
+    
+    #clin.sim <- unlist(clin.char.sims[b,])
+    clin.sim[1:3] <- unlist(clin.char.sims[b,1:3]) # only SMRs excl from PSA 
+    utility.sim <- unlist(utility.sims[b,])
+    cost.sim <- unlist(costs.sims[b,])
+    
+    trace.results.sim <- gen.trace(clin.sim)
+    inner.results[b,] <- gen.outcomes(trace.results.sim, util = utility.sim, cost = cost.sim)[[1]] 
+  }
+  
+  #after each inner loop PSA, calculate the mean NMB for each tx and store the results
+  nmb <- gen.nmb(inner.results)
+  evppi.results.placebo[a,] <- nmb[[1]]
+  evppi.results.txa[a,] <- nmb[[2]]
+  
+}
+
+# Calculate the EVPPI 
+evppi.smr <- gen.evppi.results(evppi.results.placebo, evppi.results.txa, lambda)
+
+
+
+## EVPPI loops - Utility  
+
+for(a in 1:outer.loops){
+  
+  ## 1. Select the 'partial' parameter from the outer loop 
+  utility.sim <- unlist(utility.sims[a,])
+  
+  for(b in 1:inner.loops){
+    
+    # Select traditional parameters, minus the outer loop parameter
+    
+    clin.sim <- unlist(clin.char.sims[b,])
+    #utility.sim <- unlist(utility.sims[b,])
+    cost.sim <- unlist(costs.sims[b,])
+    
+    trace.results.sim <- gen.trace(clin.sim)
+    inner.results[b,] <- gen.outcomes(trace.results.sim, util = utility.sim, cost = cost.sim)[[1]] 
+  }
+  
+  #after each inner loop PSA, calculate the mean NMB for each tx and store the results
+  nmb <- gen.nmb(inner.results)
+  evppi.results.placebo[a,] <- nmb[[1]]
+  evppi.results.txa[a,] <- nmb[[2]]
+  
+}
+
+# Calculate the EVPPI 
+evppi.utility <- gen.evppi.results(evppi.results.placebo, evppi.results.txa, lambda)
+
+
+
+
+## EVPPI loops - Costs  
+
+for(a in 1:outer.loops){
+  
+  ## 1. Select the 'partial' parameter from the outer loop 
+  cost.sim <- unlist(costs.sims[a,])
+  
+  for(b in 1:inner.loops){
+    
+    # Select traditional parameters, minus the outer loop parameter
+    
+    clin.sim <- unlist(clin.char.sims[b,])
+    utility.sim <- unlist(utility.sims[b,])
+    #cost.sim <- unlist(costs.sims[b,])
+    
+    trace.results.sim <- gen.trace(clin.sim)
+    inner.results[b,] <- gen.outcomes(trace.results.sim, util = utility.sim, cost = cost.sim)[[1]] 
+  }
+  
+  #after each inner loop PSA, calculate the mean NMB for each tx and store the results
+  nmb <- gen.nmb(inner.results)
+  evppi.results.placebo[a,] <- nmb[[1]]
+  evppi.results.txa[a,] <- nmb[[2]]
+  
+}
+
+# Calculate the EVPPI 
+evppi.costs <- gen.evppi.results(evppi.results.placebo, evppi.results.txa, lambda)
+
+
+## Reshaping? 
+
+evppi.wide <- data.frame(evppi.head.injury,
+                                 evppi.smr[,2],
+                                 evppi.utility[,2],
+                                 evppi.costs[,2])
+
+colnames(evppi.wide) <- c('lambda', 'death following head injury and treatment effect', 'SMR', 'utility', 'costs')
+
+evppi.long <- evppi.wide %>% gather(Parameters, VoI, 2:5)
+#evppi.long.pop <- reshape2::melt(evppi.wide.pop, id.vars = c("lambda"))
+
+# Plots 
 
 gen.evppi.graph = function(evppi, save = FALSE) {
   
-  z = ggplot(evppi) + geom_line(aes(x=lambda, y=evppi.results), size=0.6) + 
+  z = ggplot(evppi) + geom_line(aes(x=lambda, y=VoI, colour = Parameters), size=0.6) + 
     labs(x = "Willingness to pay (£)", text = element_text(size=4)) + 
     labs (y = "EVPPI (£)", text = element_text(size=4)) + theme_classic() +
     theme(legend.title = element_blank(), axis.title=element_text(face="bold"), 
@@ -704,7 +808,7 @@ gen.evppi.graph = function(evppi, save = FALSE) {
     scale_y_continuous(expand = c(0, 0)) + 
     geom_vline(xintercept = 20000, linetype="dotted", size=0.25)
   
-
+  
   
   if(save == TRUE) ggsave(paste("figures\\EVPPI",Sys.Date(),".png"), z, width=107, height=70, dpi=300, units='mm')
   
@@ -712,7 +816,6 @@ gen.evppi.graph = function(evppi, save = FALSE) {
   
 }
 
-gen.evppi.graph(evppi)
+gen.evppi.graph(evppi.long)
 
 
-evppi.end.time - evppi.start.time
