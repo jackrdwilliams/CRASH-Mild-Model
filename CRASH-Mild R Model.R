@@ -15,8 +15,8 @@ disc.c <- 0.035
 disc.o <- 0.035
 
 sims <- 1000
-outer.loops <- 100
-inner.loops <- 100
+outer.loops <- 200
+inner.loops <- 200
 
 age <- 70
 male = 0.5 # plaecholder
@@ -195,7 +195,7 @@ gen.utility.dec <- function(){
 
 utility <- gen.utility()
 
-utility.sims <- gen.utility.sims(disability.placebo.sims, disability.placebo.sims)
+utility.sims <- gen.utility.sims(disability.placebo.sims, disability.txa.sims)
 
 utility.decrement <- gen.utility.dec()
 
@@ -443,8 +443,6 @@ outcomes <- gen.outcomes(trace.results)
 psa.results <- matrix(0, sims, 4)
 colnames(psa.results) <- c("cost.placebo", "utility.placebo","cost.txa","utility.txa")
 
-
-
 for(p in 1:sims){
   
   # Subset and assign existing sims
@@ -457,11 +455,7 @@ for(p in 1:sims){
   
 }
 
-inc.costs <- psa.results[,3] - psa.results[,1]
-inc.qaly <- psa.results[,4] - psa.results[,2]
-icer <- inc.costs / inc.qaly
-  
-head(psa.results)
+
 # Generate CEAC table
 
 gen.ceac.table <- function(results, lambda.inc = 500){
