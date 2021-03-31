@@ -15,8 +15,8 @@ disc.c <- 0.035
 disc.o <- 0.035
 
 sims <- 1000
-outer.loops <- 200
-inner.loops <- 200
+outer.loops <- 100
+inner.loops <- 100
 
 age <- 70
 male = 0.5 # plaecholder
