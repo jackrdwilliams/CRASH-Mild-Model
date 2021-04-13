@@ -311,8 +311,8 @@ costs.sims <- gen.costs()[[2]]
 
 
 
-run.model <- function(clinical = clin.char, dis.plac = disability.placebo, dis.txa = disability.txa, util.values = utility, dec = utility.decrement, 
-                      cost = costs, discount.c = disc.c, discount.o = disc.o) {
+run.model <- function(clinical = clin.char, dis.plac = disability.placebo, dis.txa = disability.txa, util.values = utility, cost = costs, 
+                      dec = utility.decrement, discount.c = disc.c, discount.o = disc.o) {
   
   ### TRACE ###
   
@@ -403,8 +403,8 @@ run.model <- function(clinical = clin.char, dis.plac = disability.placebo, dis.t
   
   
   # Utility
-  disability.placebo
-  #util.plac <- utility.values * matrix(dis.placebo, sims, length(dis.placebo), byrow= T)
+
+    #util.plac <- utility.values * matrix(dis.placebo, sims, length(dis.placebo), byrow= T)
   util.plac <- util.values * dis.plac
   util.values.plac <- sum(util.plac)
      
@@ -459,16 +459,17 @@ colnames(psa.results) <- c("cost.placebo", "utility.placebo","cost.txa","utility
 for(p in 1:sims){
   
   # Subset and assign existing sims
-
   clin.sim <- unlist(clin.char.sims[p,])
   dis.placebo.sim <- unlist(disability.placebo.sims[p,])
-  dis.txa.sim <- unlist(disability.txa.sims[p,])
+  dis.txa.sim <- dis.placebo.sim # unlist(disability.txa.sims[p,])
   utility.sim <- unlist(utility.sims[p,])
   cost.sim <- unlist(costs.sims[p,])
 
   psa.results[p,] <- run.model(clin.sim, dis.placebo.sim, dis.txa.sim, utility.sim, cost.sim)[[1]] 
   
 }
+
+
 
 
 # Generate CEAC table
@@ -511,7 +512,6 @@ gen.ceac.table <- function(results, lambda.inc = 500){
               evpi))
   
 }
-
 
 
 ceac <- gen.ceac.table(psa.results, 100)[[1]]
