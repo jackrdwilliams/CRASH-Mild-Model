@@ -104,7 +104,10 @@ clin.char.sims <- gen.clinical.characteristics()[[2]]
 disability.placebo <- gen.clinical.characteristics()[[3]]
 disability.txa <- gen.clinical.characteristics()[[4]]
 disability.placebo.sims <- gen.clinical.characteristics()[[5]]
-disability.txa.sims <- gen.clinical.characteristics()[[6]]
+
+## Assuming disability for TXA is equal to placebo
+# disability.txa.sims <- gen.clinical.characteristics()[[6]]
+disability.txa.sims <- disability.placebo.sims
 
 
 ## Generate long-term risk of death
@@ -461,7 +464,7 @@ for(p in 1:sims){
   # Subset and assign existing sims
   clin.sim <- unlist(clin.char.sims[p,])
   dis.placebo.sim <- unlist(disability.placebo.sims[p,])
-  dis.txa.sim <- dis.placebo.sim # unlist(disability.txa.sims[p,])
+  dis.txa.sim <- unlist(disability.txa.sims[p,])
   utility.sim <- unlist(utility.sims[p,])
   cost.sim <- unlist(costs.sims[p,])
 
@@ -591,7 +594,8 @@ lambda <- seq(from = 0, to = 30000, by = 500)
 
 clin.char.sims <- gen.clinical.characteristics()[[2]]
 disability.placebo.sims <- gen.clinical.characteristics()[[5]]
-disability.txa.sims <- gen.clinical.characteristics()[[6]]
+disability.txa.sims <- disability.placebo.sims # same as placebo (equal for both arms)
+#disability.txa.sims <- gen.clinical.characteristics()[[6]]
 utility.sims <- gen.utility.sims()
 costs.sims <- gen.costs(disability.placebo, disability.txa, disability.placebo.sims, disability.txa.sims)[[2]]
 
@@ -651,13 +655,6 @@ gen.evppi.results <- function(evppi.results1 = evppi.results.placebo, evppi.resu
 }
 
 
-
-clin.sim <- unlist(clin.char.sims[p,])
-dis.placebo.sim <- unlist(disability.placebo.sims[p,])
-dis.txa.sim <- unlist(disability.txa.sims[p,])
-utility.sim <- unlist(utility.sims[p,])
-cost.sim <- unlist(costs.sims[p,])
-run.model(clin.sim, dis.placebo.sim, dis.txa.sim, utility.sim, cost.sim)[[1]] 
 
 ## EVPPI Loops - 'Double Monte Carlo loop method' 
 
@@ -840,9 +837,9 @@ evppi.wide <- data.frame(evppi.head.injury,
                          evppi.utility[,2],
                          evppi.costs[,2])
 
-colnames(evppi.wide) <- c('lambda', 'death following head injury and treatment effect', 'SMR', 'utility', 'costs')
+colnames(evppi.wide) <- c('lambda', 'death following head injury and treatment effect', 'SMR', 'disability', 'utility', 'costs')
 
-evppi.long <- evppi.wide %>% gather(Parameters, VoI, 2:5)
+evppi.long <- evppi.wide %>% gather(Parameters, VoI, 2:6)
 #evppi.long.pop <- reshape2::melt(evppi.wide.pop, id.vars = c("lambda"))
 
 # Plots 
