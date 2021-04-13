@@ -444,18 +444,22 @@ run.model <- function(clinical = clin.char, dis.plac = disability.placebo, dis.t
 
 
 ## Deterministic
-run.model(clin.char, dis.plac = disability.placebo, dis.txa = disability.txa, util.values = utility, dec = utility.decrement, 
-          cost = costs, discount.c = disc.c, discount.o = disc.o)
+run.model(clin.char, dis.plac = disability.placebo, dis.txa = disability.txa, util.values = utility,
+          cost = costs, dec = utility.decrement, discount.c = disc.c, discount.o = disc.o)
 
 
-z <- run.model(clin.char, dis.plac = disability.placebo, dis.txa = disability.txa, util.values = utility, dec = utility.decrement, 
-          cost = costs, discount.c = disc.c, discount.o = disc.o)
 
-z[[2]][1] * 10000
+p = 10
+clin.sim <- unlist(clin.char.sims[p,])
+dis.placebo.sim <- unlist(disability.placebo.sims[p,])
+dis.txa.sim <- unlist(disability.txa.sims[p,])
+utility.sim <- unlist(utility.sims[p,])
+cost.sim <- unlist(costs.sims[p,])
 
-i = 1
-run.model(clin.char.sims[i,], dis.plac = disability.placebo.sims[i,], dis.txa = disability.txa.sims[i,], util.values = utility.sims[i,], dec = utility.decrement, 
-          cost = costs.sims[i,], discount.c = disc.c, discount.o = disc.o)
+
+
+
+run.model(clin.sim, dis.placebo.sim, dis.txa.sim, utility.sim, cost.sim, dec = utility.decrement, discount.c = disc.c, discount.o = disc.o)
 
 
 
@@ -668,7 +672,6 @@ gen.evppi.results <- function(evppi.results1 = evppi.results.placebo, evppi.resu
 
 
 ## EVPPI Loops - 'Double Monte Carlo loop method' 
-
 
 
 ## EVPPI loops - Head injury and TXA treatment effect
