@@ -873,92 +873,167 @@ gen.evppi.graph(evppi.long)
 
 
 
-## EVSI ##
 
 
-inner.loops <- 30
-outer.loops <- 30
-
-# Select lambda values to be considered
-evsi.lambda <- seq(from = 0, to = 40000, by = 2000)
-
-
-
-# Sample all probabilistic parameters
-clin.char.sims <- gen.clinical.characteristics()[[2]]
-disability.placebo.sims <- gen.clinical.characteristics()[[5]]
-disability.txa.sims <- disability.placebo.sims # same between groups
-utility.sims <- gen.utility.sims()
-costs.sims <- gen.costs()[[2]]
-
-
-
-inner.results <- matrix(0, inner.loops, 4)
-
-evsi.results.placebo <- matrix(0, ncol = length(evsi.lambda), nrow = outer.loops)
-colnames(evsi.results.placebo) <- as.character(evsi.lambda)
-evsi.results.txa <- evsi.results.placebo
-
-# EVSI functions
-
-gen.evsi.results <- function(evsi.results1 = evsi.results.placebo, evsi.results2 = evsi.results.txa, lam = evsi.lambda){
-
-  ## calculate the mean NMB for placebo and txa, at each lambda
-  current.info1 <- apply(evsi.results1, 2, mean)
-  current.info2 <- apply(evsi.results2, 2, mean)
-
-  current.info <- pmax(current.info1, current.info2)
-
-  evsi.array <- array(0, dim = c(outer.loops, length(lam), 2))
-  evsi.array[,,1] <- evsi.results1
-  evsi.array[,,2] <- evsi.results2
-
-  perf.info.sims <- apply(evsi.array, c(1,2), max)
-  perf.info <- apply(perf.info.sims, 2, mean)
-
-  evsi.results <- c(perf.info - current.info)
-
-  evsi <- data.frame(lam, evsi.results)
-
-  return(evsi)
-
-}
-
-
-# EVSI loops - Head injury risk, TXA treatment effect, Clinical outcomes, costs of treatment and hospital 
-
-for(a in 1:outer.loops){
-
-  ## 1. Select study parameters 
-  clin.sim <- unlist(clin.char.sims[a,])
-  dis.placebo.sim <- unlist(disability.placebo.sims[a,])
-  dis.txa.sim <- unlist(disability.txa.sims[a,])
-  cost.sim <- unlist(costs.sims[a,])
-  
-  for(b in 1:inner.loops){
-
-    # Select traditional parameters, minus the outer loop parameter
-
-    #clin.sim <- unlist(clin.char.sims[b,])
-    clin.sim[4:5] <- unlist(clin.char.sims[b,4:5]) 
-    utility.sim <- unlist(utility.sims[b,])
-    cost.sim[4:9] <- unlist(costs.sims[b,4:9])
-
-    inner.results[b,] <- run.model(clin.sim, dis.placebo.sim, dis.txa.sim, utility.sim, cost.sim)[[1]] 
-  }
-
-  #after each inner loop PSA, calculate the mean NMB for each tx and store the results
-  nmb <- gen.nmb(inner.results, lam = evsi.lambda)
-  evsi.results.placebo[a,] <- nmb[[1]]
-  evsi.results.txa[a,] <- nmb[[2]]
-
-}
-
-# Calculate the EVSI
-evsi.sim.results <- gen.evsi.results(evsi.results.placebo, evsi.results.txa, evsi.lambda)
-
-
-## save these results and loop back and change the sample size 
-
-
-
+# ## EVSI - WOrk in progress (unsure if JAGS/OpenBUGS needed?) ##
+# 
+# 
+# inner.loops <- 30
+# outer.loops <- 30
+# 
+# sample.size.vec <- c(1000, 2000, 4000, 8000, 12000, 16000, 20000)
+# 
+# # Select lambda values to be considered
+# evsi.lambda <- seq(from = 0, to = 40000, by = 2000)
+# 
+# # Sample all probabilistic parameters
+# clin.char.sims <- gen.clinical.characteristics()[[2]]
+# disability.placebo.sims <- gen.clinical.characteristics()[[5]]
+# disability.txa.sims <- disability.placebo.sims # same between groups
+# utility.sims <- gen.utility.sims()
+# costs.sims <- gen.costs()[[2]]
+# 
+# 
+# # Develop results matrices
+# inner.results <- matrix(0, inner.loops, 4)
+# 
+# evsi.results.placebo <- matrix(0, ncol = length(evsi.lambda), nrow = outer.loops)
+# colnames(evsi.results.placebo) <- as.character(evsi.lambda)
+# evsi.results.txa <- evsi.results.placebo
+# 
+# evsi.results <- matrix(0, nrow = length(sample.size.vec), ncol = length(evsi.lambda + 1))
+# 
+# # EVSI functions
+# 
+# gen.evsi.results <- function(evsi.results1 = evsi.results.placebo, evsi.results2 = evsi.results.txa, lam = evsi.lambda){
+# 
+#   ## calculate the mean NMB for placebo and txa, at each lambda
+#   current.info1 <- apply(evsi.results1, 2, mean)
+#   current.info2 <- apply(evsi.results2, 2, mean)
+# 
+#   current.info <- pmax(current.info1, current.info2)
+# 
+#   evsi.array <- array(0, dim = c(outer.loops, length(lam), 2))
+#   evsi.array[,,1] <- evsi.results1
+#   evsi.array[,,2] <- evsi.results2
+# 
+#   perf.info.sims <- apply(evsi.array, c(1,2), max)
+#   perf.info <- apply(perf.info.sims, 2, mean)
+# 
+#   evsi.results <- c(perf.info - current.info)
+# 
+#   #evsi <- data.frame(lam, evsi.results)
+#   evsi <- c(evsi.results)
+#   names(evsi.results) <- lam
+#   return(evsi)
+# 
+# }
+# 
+# 
+# est.trial.parameters <- function(n, hi.risk.mean, treatment.effect.mean, sample.size){
+#   
+#   ## Hi risk 
+#   se <- sqrt((hi.risk.mean * (1 - hi.risk.mean)) / sample.size)
+#   alpha <- hi.risk.mean * (hi.risk.mean * (1 - hi.risk.mean) / (se^2) - 1 )
+#   beta <- ( alpha /  hi.risk.mean) - alpha 
+#   hi.risk.sim <- rbeta(n, alpha, beta)
+#   
+#   # Treatment effect (based on probabiity of head injury death, and times tx effect selected)
+#   
+#   treatment.effect.mean <- rnorm(1,0.7,0.1)
+#   
+#   control.deaths <- hi.risk.sim * sample.size
+#   intervention.deaths <- 
+#   
+#   
+#   return(list(hi.risk.sim, 
+#               treatment.effect.sim))
+#   
+# }
+# 
+# est.norm <- function(n, mean, sample.size){
+#   
+#   se <- sqrt((mean * (1 - mean)) / sample.size)
+#   alpha <- mean * (mean * (1 - mean) / (se^2) - 1 )
+#   beta <- ( alpha /  mean) - alpha 
+#   sim <- rbeta(n, alpha, beta)
+#   
+#   return(c(sim))
+#   
+# }
+# 
+# 
+# # Sample size loops  
+# 
+# for(z in 1:length(sample.size.vec)){
+#   
+#   sample.size <- sample.size.vec[z]  
+#   
+# 
+#   
+# 
+#   
+#   # Outer loop - Head injury risk, TXA treatment effect, Clinical outcomes, costs of treatment and hospital 
+#   
+#   for(a in 1:outer.loops){
+#   
+#     ## 1. Select study parameters 
+#     clin.sim <- unlist(clin.char.sims[a,])
+#     dis.placebo.sim <- unlist(disability.placebo.sims[a,])
+#     dis.txa.sim <- unlist(disability.txa.sims[a,])
+#     cost.sim <- unlist(costs.sims[a,])
+#     
+#     # Sample a value and create dataset around it 
+#     
+#     
+#     # New hi.death.risk 
+#     hi.risk.sample.prior <- unlist(clin.char.sims[a,2])
+#     hi.risk.posterior <- est.beta(n = inner.loops, hi.risk.sample.prior, sample.size)
+# 
+#     # New hi.death.risk 
+#     treatment.effect.sample.prior <- unlist(clin.char.sims[a,1])
+#     treatment.effect.posterior <- #est.beta(n = inner.loops, hi.risk.sample.mean, sample.size)
+#     
+#       
+#     # create dataset 
+#     #new.sims <- rbeta(1,1,1)
+#     
+#     
+#       # Inner loop
+#       
+#       for(b in 1:inner.loops){
+#     
+#         # New samples from posterior dist
+#         #clin.sim <- unlist(clin.char.sims[b,])
+#         clin.sim[2] <- hi.risk.posterior[b]
+#         
+#         # Standard old samples
+#         clin.sim[4:5] <- unlist(clin.char.sims[b,4:5]) 
+#         utility.sim <- unlist(utility.sims[b,])
+#         cost.sim[4:9] <- unlist(costs.sims[b,4:9])
+#         
+#         ## new distribution - draw samples
+#         
+#         inner.results[b,] <- run.model(clin.sim, dis.placebo.sim, dis.txa.sim, utility.sim, cost.sim)[[1]] 
+#     }
+#   
+#     #after each inner loop PSA, calculate the mean NMB for each tx and store the results
+#     nmb <- gen.nmb(inner.results, lam = evsi.lambda)
+#     evsi.results.placebo[a,] <- nmb[[1]]
+#     evsi.results.txa[a,] <- nmb[[2]]
+#   
+#   }
+# 
+# # Calculate the EVSI for given sample size
+# evsi.sim.results <- gen.evsi.results(evsi.results.placebo, evsi.results.txa, evsi.lambda)
+# 
+# # Save the results of appropriate sample and loop back around
+# evsi.results[z,] <- c(sample.size, evsi.sim.results)
+# 
+# }
+# 
+# 
+# head(evsi.results)
+# 
+# 
+# 
