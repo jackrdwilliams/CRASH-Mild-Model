@@ -4,10 +4,12 @@
 if(!require(dplyr)) install.packages('dplyr')
 if(!require(tidyr)) install.packages('tidyr')
 if(!require(ggplot2)) install.packages('ggplot2')
+if(!require(MCMCpack)) install.packages('MCMCpack')
 
 library(tidyr)
 library(dplyr)
 library(ggplot2)
+library(MCMCpack)
 
 # Model Options
 
@@ -200,7 +202,6 @@ utility.sims <- gen.utility.sims()
 
 utility.decrement <- gen.utility.dec()
 
-utility
 
 ## Costs 
 
@@ -308,6 +309,10 @@ gen.costs <- function(){
 costs <- gen.costs()[[1]]
 costs.sims <- gen.costs()[[2]]
 
+
+## VoI effective population 
+
+effective.population <- 1
 
 
 ##  TRACE CALCULATIONS AND OUTCOMES  ## 
@@ -520,6 +525,7 @@ gen.ceac.table <- function(results, lambda.inc = 500){
 ceac <- gen.ceac.table(psa.results, 100)[[1]]
 evpi <- gen.ceac.table(psa.results, 100)[[2]]
 
+evpi.pop <- gen.ceac * effective.population
 
 # Graphics  - TBC (take from other sources)
 
@@ -686,7 +692,6 @@ clin.sim <- unlist(clin.char.sims[a,])
   
 }
 
-# Calculate the EVPPI 
 evppi.head.injury <- gen.evppi.results(evppi.results.placebo, evppi.results.txa, lambda)
 
 
@@ -721,7 +726,6 @@ for(a in 1:outer.loops){
   
 }
 
-# Calculate the EVPPI 
 evppi.smr <- gen.evppi.results(evppi.results.placebo, evppi.results.txa, lambda)
 
 
@@ -755,7 +759,6 @@ for(a in 1:outer.loops){
   
 }
 
-# Calculate the EVPPI 
 evppi.disability <- gen.evppi.results(evppi.results.placebo, evppi.results.txa, lambda)
 
 
@@ -791,7 +794,6 @@ for(a in 1:outer.loops){
   
 }
 
-# Calculate the EVPPI 
 evppi.utility <- gen.evppi.results(evppi.results.placebo, evppi.results.txa, lambda)
 
 
