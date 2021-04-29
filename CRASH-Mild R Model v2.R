@@ -312,7 +312,18 @@ costs.sims <- gen.costs()[[2]]
 
 ## VoI effective population 
 
-effective.population <- 1
+tbi.incidence <- c(gbd = 260, 
+                  headway = 531)
+
+pop.parms.GBD <- c(tbi.per.year = 168579)
+
+pop.parms <- c(tbi.per.year = 1400000, 
+                      prop.mild.tbi = 0.9,
+                      prop.70 = 0.134838212,
+                      years = 10, 
+                      discount = 0.035)
+
+effective.population <- sum((pop.parms[1] * pop.parms[2] * pop.parms[3]) * (1/(1+pop.parms[5])^(1:pop.parms[4])))
 
 
 ##  TRACE CALCULATIONS AND OUTCOMES  ## 
@@ -912,9 +923,13 @@ gen.evppi.trial.graph = function(evppi, save = FALSE) {
 }
 gen.evppi.trial.graph(evppi.trial.long)
 
+
+
+
+
 # ## EVSI - WOrk in progress (unsure if JAGS/OpenBUGS needed?) ##
 # 
-# 
+{# 
 # inner.loops <- 30
 # outer.loops <- 30
 # 
@@ -1074,3 +1089,4 @@ gen.evppi.trial.graph(evppi.trial.long)
 # 
 # 
 # 
+}
