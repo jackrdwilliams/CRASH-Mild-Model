@@ -927,8 +927,8 @@ gen.evppi.trial.graph(evppi.trial.long)
 
 ## Save EVPPI's
 
-save(evppi.long, file="evppi.Rda")
-save(evppi.trial.long, file="evppi.trial.Rda")
+# save(evppi.long, file="evppi.Rda")
+# save(evppi.trial.long, file="evppi.trial.Rda")
 
 
 # ## EVSI - WOrk in progress (unsure if JAGS/OpenBUGS needed?) ##
