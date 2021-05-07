@@ -16,7 +16,7 @@ library(MCMCpack)
 disc.c <- 0.035
 disc.o <- 0.035
 
-sims <- 1000
+sims <- 10000
 outer.loops <- 100
 inner.loops <- 100
 
@@ -610,7 +610,7 @@ gen.evpi.graph(evpi)
 # utility.sims <- gen.utility.sims()
 # costs.sims <- gen.costs(disability.placebo, disability.txa, disability.placebo.sims, disability.txa.sims)[[2]]
 
-
+evppi.start.time <- Sys.time()
 
 # Generate matrices for EVPPI results to be stored in
 
@@ -923,12 +923,18 @@ gen.evppi.trial.graph = function(evppi, save = FALSE) {
 }
 gen.evppi.trial.graph(evppi.trial.long)
 
-
+evppi.stop.time <- Sys.time()
+evppi.stop.time - evppi.start.time
 
 ## Save EVPPI's
 
-# save(evppi.long, file="evppi.Rda")
-# save(evppi.trial.long, file="evppi.trial.Rda")
+save(evppi.long.5May, file="evppi.Rda")
+save(evppi.trial.long.5May, file="evppi.trial.Rda")
+
+
+
+
+
 
 
 # ## EVSI - WOrk in progress (unsure if JAGS/OpenBUGS needed?) ##
