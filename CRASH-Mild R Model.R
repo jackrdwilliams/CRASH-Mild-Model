@@ -11,7 +11,7 @@ library(dplyr)
 library(ggplot2)
 library(MCMCpack)
 
-source("VoI Script.R")
+source("VoI Parameters.R")
 
 # Model Options
 
@@ -463,6 +463,8 @@ run.model(clin.char, dis.plac = disability.placebo, dis.txa = disability.txa, ut
 psa.results <- matrix(0, sims, 4)
 colnames(psa.results) <- c("cost.placebo", "utility.placebo","cost.txa","utility.txa")
 
+pb = txtProgressBar(min = 0, max = sims, initial = 0, style = 3)
+
 for(p in 1:sims){
   
   # Subset and assign existing sims
@@ -473,7 +475,7 @@ for(p in 1:sims){
   cost.sim <- unlist(costs.sims[p,])
 
   psa.results[p,] <- run.model(clin.sim, dis.placebo.sim, dis.txa.sim, utility.sim, cost.sim)[[1]] 
-  
+  setTxtProgressBar(pb,p)
 }
 
 
@@ -528,8 +530,6 @@ evpi.pop <- evpi[,2] * effective.population
 # Graphics  - TBC (take from other sources)
 
 
-
-
 # CEAC # 
 
 gen.ceac.graph = function(psa, save = FALSE) {
@@ -554,7 +554,6 @@ gen.ceac.graph = function(psa, save = FALSE) {
   return(z)
   
 }
-
 gen.evpi.graph = function(evpi, save = FALSE) {
   
   z = ggplot(evpi) + geom_line(aes(x=lambda, y=evpi.m), size=0.6) + 
@@ -575,7 +574,6 @@ gen.evpi.graph = function(evpi, save = FALSE) {
   return(z)
   
 }
-
 
 gen.ceac.graph(ceac)
 gen.evpi.graph(evpi)

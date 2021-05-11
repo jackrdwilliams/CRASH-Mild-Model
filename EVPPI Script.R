@@ -334,9 +334,8 @@ evppi.stop.time - evppi.start.time
 
 ## Save EVPPI's
 
-save(evppi.long.5May, file="evppi.Rda")
-save(evppi.trial.long.5May, file="evppi.trial.Rda")
-
+save(evppi.long, file=paste("stored results/evppi.",Sys.Date(),".Rda", sep=""))
+save(evppi.trial.long, file=paste("stored results/evppi.trial.",Sys.Date(),".Rda", sep=""))
 
 
 
