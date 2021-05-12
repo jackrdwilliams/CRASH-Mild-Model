@@ -22,7 +22,7 @@ sims <- 10000
 outer.loops <- 100
 inner.loops <- 100
 
-age <- 70
+age <- 80
 male = 0.5 # plaecholder
 time.horizon = min(60, 100-ceiling(age))
 
@@ -219,7 +219,7 @@ gen.costs <- function(){
 
   cost.txa.dose <- 1.5
   cost.sodium <- 0 # 55p for 100ml, 270 for 500ml 
-  cost.needle <- 0.05151 
+  cost.needle <- 0.054013349
   cost.nurse <- 0
 
   cost.treatment <- sum(cost.txa.dose, cost.sodium, cost.needle, cost.nurse)
