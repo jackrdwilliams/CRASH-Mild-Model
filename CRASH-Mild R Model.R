@@ -217,10 +217,10 @@ utility.decrement <- gen.utility.dec()
 
 gen.costs <- function(){
 
-  cost.txa.dose <- 6
-  cost.sodium <- 0.55 + 2.7 # 55p for 100ml, 270 for 500ml 
+  cost.txa.dose <- 1.5
+  cost.sodium <- 0 # 55p for 100ml, 270 for 500ml 
   cost.needle <- 0.05151 
-  cost.nurse <- 12.95
+  cost.nurse <- 0
 
   cost.treatment <- sum(cost.txa.dose, cost.sodium, cost.needle, cost.nurse)
   
@@ -241,13 +241,15 @@ gen.costs <- function(){
 
   # Monitoring costs 
 
-  cost.good.st <- 290.145026
-  cost.moderate.st <- 20745.36936
-  cost.severe.st <- 40982.984929
+  cost.good.st <- 302.56133028
+  cost.moderate.st <- 21633.13511509
+  cost.severe.st <- 42736.78790218
 
-  cost.good.lt <- 25.65601
-  cost.moderate.lt <- 1710.40065
-  cost.severe.lt <- 13362.505071
+
+  cost.good.lt <- 26.75391869
+  cost.moderate.lt <- 1783.59457945
+  cost.severe.lt <- 13934.33265195
+
 
 
   # monitoring.costs.st <- sum(c(rep(cost.good.st,2), cost.moderate.st, rep(cost.severe.st, 2)) * dis.plac) / sum(dis.plac)
@@ -274,7 +276,7 @@ gen.costs <- function(){
   
   # Monitoring costs # 
   
-  inf0607 <- 302/249.8
+  inf0607 <- 314.9/249.8
   
   cost.good.st.sims <- rgamma(sims, shape = (240^2 / 48^2), scale = 48^2 / 240 ) * inf0607
   cost.moderate.st.sims <- rgamma(sims, shape = (17160^2 / 3432^2), scale = 3432^2 / 17160 ) * inf0607
@@ -319,7 +321,7 @@ costs.sims <- gen.costs()[[2]]
 ##  TRACE CALCULATIONS AND OUTCOMES  ## 
 
 run.model <- function(clinical = clin.char, dis.plac = disability.placebo, dis.txa = disability.txa, util.values = utility, cost = costs, 
-                      dec = utility.decrement, discount.c = disc.c, discount.o = disc.o) {
+                      dec = utility.decrement, discount.c = disc.c, discount.o = disc.o, output.type = 1) {
   
   ### TRACE ###
   
@@ -439,11 +441,13 @@ run.model <- function(clinical = clin.char, dis.plac = disability.placebo, dis.t
       (cost.sum[2] - cost.sum[1]) / (utility.sum[2] - utility.sum[1])  
   
   
-  return(list(c(cost.placebo = cost.sum[1], 
+  if(output.type==1) {
+    return(list(c(cost.placebo = cost.sum[1], 
                 utility.placebo = utility.sum[1], 
                 cost.txa = cost.sum[2], 
                 utility.txa = utility.sum[2]), 
               icer = icer)) 
+  } else return(icer)
   
   
 }
@@ -454,6 +458,30 @@ run.model <- function(clinical = clin.char, dis.plac = disability.placebo, dis.t
 run.model(clin.char, dis.plac = disability.placebo, dis.txa = disability.txa, util.values = utility,
           cost = costs, dec = utility.decrement, discount.c = disc.c, discount.o = disc.o)
 
+
+## DSA ## 
+
+
+## Head injury risk 
+
+clin.char.dsa <- clin.char
+tx.effect.goalseek <- function(x){
+  clin.char.dsa[1] <- x 
+  z <- run.model(clin.char.dsa, output.type = 2) - 20000
+  return(z)
+}
+
+hi.risk.thresholds <- seq(from = 0.0001, to = 0.005, by = 0.0001)
+threshold.mat <- matrix(0, ncol = 2, nrow = length(hi.risk.thresholds))
+threshold.mat[,1] <- hi.risk.thresholds
+colnames(threshold.mat) <- c("Hi Risk", "Tx effect")
+for(i in 1:length(hi.risk.thresholds)){
+  clin.char.dsa[2] <- hi.risk.thresholds[i] 
+  res <- uniroot(tx.effect.goalseek, c(0.1,0.9999999))
+  threshold.mat[i,2] <- res$root
+}
+
+threshold.mat
 
 
 
