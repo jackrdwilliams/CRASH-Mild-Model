@@ -26,7 +26,7 @@ age <- 70
 male = 0.5 # plaecholder
 time.horizon = min(60, 100-ceiling(age))
 
-lambda <- seq(from = 0, to = 40000, by = 100)
+lambda <- seq(from = 0, to = 50000, by = 100)
 
 ## Age trace
 
