@@ -2,10 +2,10 @@
 ##           EVPPI              ## 
 ##------------------------------##
 
-source("CRASH-Mild R Model.R")
+# source("CRASH-Mild R Model.R")
 
-# inner.loops <- 300
-# outer.loops <- 300
+inner.loops <- 100
+outer.loops <- 100
 
 # Sample all probabilistic parameters
 
@@ -71,9 +71,58 @@ gen.evppi.results <- function(evppi.results1 = evppi.results.placebo, evppi.resu
   
 }
 
+gen.evppi.graph = function(evppi, save = FALSE) {
+  
+  z = ggplot(evppi) + geom_line(aes(x=lambda, y=VoI, colour = Parameters), size=0.6) + 
+    labs(x = "Willingness to pay (£)", text = element_text(size=4)) + 
+    labs(y = "EVPPI (£)", text = element_text(size=4)) + theme_classic() +
+    theme(legend.title = element_blank(), axis.title=element_text(face="bold"), 
+          axis.title.x = element_text(margin = margin(t = 7, r = 0, b = 3, l = 0)), 
+          axis.title.y = element_text(margin = margin(t = 0, r = 7, b = 0, l = 3)), 
+          panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+          legend.key.width=unit(1.8,"line"), text = element_text(size=7),
+          plot.margin=unit(c(1.2,0.5,0,1.2),"cm")) + 
+    scale_x_continuous(labels = scales::comma, breaks = c(seq(0,100000,5000)), limits = c(0,40000), expand = c(0, 0.1)) + 
+    scale_y_continuous(labels = scales::comma, expand = c(0, 0)) + 
+    geom_vline(xintercept = 20000, linetype="dotted", size=0.25)
+  
+  
+  
+  if(save == TRUE) ggsave(paste("figures\\EVPPI",Sys.Date(),".png"), z, width=107, height=70, dpi=300, units='mm')
+  
+  return(z)  
+  
+}
+
+gen.evppi.trial.graph = function(evppi, save = FALSE) {
+  
+  z = ggplot(evppi) + geom_line(aes(x=lambda, y=VoI, colour = Parameters, linetype = Parameters), size=0.6) + 
+    labs(x = "Willingness to pay (£)", text = element_text(size=4)) + 
+    labs(y = "EVPPI (£)", text = element_text(size=4)) + theme_classic() +
+    theme(legend.title = element_blank(), axis.title=element_text(face="bold"), 
+          axis.title.x = element_text(margin = margin(t = 7, r = 0, b = 3, l = 0)), 
+          axis.title.y = element_text(margin = margin(t = 0, r = 7, b = 0, l = 3)), 
+          panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+          legend.key.width=unit(1.8,"line"), text = element_text(size=7),
+          plot.margin=unit(c(1.2,0.5,0,1.2),"cm")) + 
+    scale_x_continuous(labels = scales::comma, breaks = c(seq(0,100000,5000)), limits = c(0,40000), expand = c(0, 0.1)) + 
+    scale_y_continuous(labels = scales::comma, expand = c(0, 0)) + 
+    scale_linetype_manual(values=c("solid", "longdash")) + 
+    scale_color_manual(values=c("black", "black")) + 
+    geom_vline(xintercept = 20000, linetype="dotted", size=0.25)
+  
+  
+  if(save == TRUE) ggsave(paste("figures\\EVPPI-Trial",Sys.Date(),".png"), z, width=180, height=100, dpi=300, units='mm')
+  
+  return(z)  
+  
+}
+
 
 
 ## EVPPI Loops - 'Double Monte Carlo loop method' 
+
+pb = txtProgressBar(min = 0, max = outer.loops*6, initial = 0, style = 3)
 
 ## EVPPI loops - Head injury and TXA treatment effect
 for(a in 1:outer.loops){
@@ -100,7 +149,7 @@ for(a in 1:outer.loops){
   nmb <- gen.nmb(inner.results)
   evppi.results.placebo[a,] <- nmb[[1]]
   evppi.results.txa[a,] <- nmb[[2]]
-  
+  setTxtProgressBar(pb,a)
 }
 evppi.head.injury <- gen.evppi.results(evppi.results.placebo, evppi.results.txa, lambda)
 
@@ -122,7 +171,6 @@ for(a in 1:outer.loops){
     utility.sim <- unlist(utility.sims[b,])
     cost.sim <- unlist(costs.sims[b,])
     
-    
     inner.results[b,] <- run.model(clin.sim, dis.placebo.sim, dis.txa.sim, utility.sim, cost.sim)[[1]] 
   }
   
@@ -130,7 +178,7 @@ for(a in 1:outer.loops){
   nmb <- gen.nmb(inner.results)
   evppi.results.placebo[a,] <- nmb[[1]]
   evppi.results.txa[a,] <- nmb[[2]]
-  
+  setTxtProgressBar(pb,outer.loops+a)
 }
 evppi.smr <- gen.evppi.results(evppi.results.placebo, evppi.results.txa, lambda)
 
@@ -159,7 +207,7 @@ for(a in 1:outer.loops){
   nmb <- gen.nmb(inner.results)
   evppi.results.placebo[a,] <- nmb[[1]]
   evppi.results.txa[a,] <- nmb[[2]]
-  
+  setTxtProgressBar(pb,outer.loops*2 + a)
 }
 evppi.disability <- gen.evppi.results(evppi.results.placebo, evppi.results.txa, lambda)
 
@@ -187,7 +235,7 @@ for(a in 1:outer.loops){
   nmb <- gen.nmb(inner.results)
   evppi.results.placebo[a,] <- nmb[[1]]
   evppi.results.txa[a,] <- nmb[[2]]
-  
+  setTxtProgressBar(pb,outer.loops*3 + a)
 }
 evppi.utility <- gen.evppi.results(evppi.results.placebo, evppi.results.txa, lambda)
 
@@ -216,7 +264,7 @@ for(a in 1:outer.loops){
   nmb <- gen.nmb(inner.results)
   evppi.results.placebo[a,] <- nmb[[1]]
   evppi.results.txa[a,] <- nmb[[2]]
-  
+  setTxtProgressBar(pb,outer.loops*4 + a)
 }
 evppi.costs <- gen.evppi.results(evppi.results.placebo, evppi.results.txa, lambda)
 
@@ -229,40 +277,11 @@ evppi.wide <- data.frame(evppi.head.injury,
                          evppi.utility[,2],
                          evppi.costs[,2])
 
-colnames(evppi.wide) <- c('lambda', 'death following head injury and treatment effect', 'SMR', 'disability', 'utility', 'costs')
+colnames(evppi.wide) <- c('lambda', 'mortality risk and treatment effect', 'SMR', 'disability', 'utility', 'costs')
 
 evppi.long <- evppi.wide %>% gather(Parameters, VoI, 2:6)
-#evppi.long.pop <- reshape2::melt(evppi.wide.pop, id.vars = c("lambda"))
-
-# Plots 
-
-gen.evppi.graph = function(evppi, save = FALSE) {
-  
-  z = ggplot(evppi) + geom_line(aes(x=lambda, y=VoI, colour = Parameters), size=0.6) + 
-    labs(x = "Willingness to pay (£)", text = element_text(size=4)) + 
-    labs (y = "EVPPI (£)", text = element_text(size=4)) + theme_classic() +
-    theme(legend.title = element_blank(), axis.title=element_text(face="bold"), 
-          axis.title.x = element_text(margin = margin(t = 7, r = 0, b = 3, l = 0)), 
-          axis.title.y = element_text(margin = margin(t = 0, r = 7, b = 0, l = 3)), 
-          panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
-          legend.key.width=unit(1.8,"line"), text = element_text(size=7),
-          plot.margin=unit(c(1.2,0.5,0,1.2),"cm")) + 
-    scale_x_continuous(labels = scales::comma, breaks = c(seq(0,100000,5000)), limits = c(0,40000), expand = c(0, 0.1)) + 
-    scale_y_continuous(expand = c(0, 0)) + 
-    geom_vline(xintercept = 20000, linetype="dotted", size=0.25)
-  
-  
-  
-  if(save == TRUE) ggsave(paste("figures\\EVPPI",Sys.Date(),".png"), z, width=107, height=70, dpi=300, units='mm')
-  
-  return(z)  
-  
-}
-
-gen.evpi.graph(evppi.head.injury)
-gen.evppi.graph(evppi.long)
-
-
+evppi.long.pop <- evppi.long
+evppi.long.pop$VoI <- evppi.long$VoI * effective.population
 
 
 #### EVPPI for trial parameters 
@@ -289,10 +308,11 @@ for(a in 1:outer.loops){
   nmb <- gen.nmb(inner.results)
   evppi.results.placebo[a,] <- nmb[[1]]
   evppi.results.txa[a,] <- nmb[[2]]
-  
+  setTxtProgressBar(pb,outer.loops*5 + a)
 }
 
 evppi.trial.parms <- gen.evppi.results(evppi.results.placebo, evppi.results.txa, lambda)
+
 
 ## Reshape / plot
 
@@ -301,43 +321,22 @@ evppi.trial <- cbind(evpi, evppi.trial.parms[,2])
 dim(evppi.trial)
 colnames(evppi.trial) <- c('lambda', 'EVPI', 'EVPPI for trial parameters')
 evppi.trial.long <- evppi.trial %>% gather(Parameters, VoI, 2:3)
-gen.evppi.graph(evppi.trial.long)
-
-
-gen.evppi.trial.graph = function(evppi, save = FALSE) {
-  
-  z = ggplot(evppi) + geom_line(aes(x=lambda, y=VoI, colour = Parameters, linetype = Parameters), size=0.6) + 
-    labs(x = "Willingness to pay (£)", text = element_text(size=4)) + 
-    labs(y = "EVPPI (£)", text = element_text(size=4)) + theme_classic() +
-    theme(legend.title = element_blank(), axis.title=element_text(face="bold"), 
-          axis.title.x = element_text(margin = margin(t = 7, r = 0, b = 3, l = 0)), 
-          axis.title.y = element_text(margin = margin(t = 0, r = 7, b = 0, l = 3)), 
-          panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
-          legend.key.width=unit(1.8,"line"), text = element_text(size=7),
-          plot.margin=unit(c(1.2,0.5,0,1.2),"cm")) + 
-    scale_x_continuous(labels = scales::comma, breaks = c(seq(0,100000,5000)), limits = c(0,40000), expand = c(0, 0.1)) + 
-    scale_y_continuous(expand = c(0, 0)) + 
-    scale_linetype_manual(values=c("solid", "longdash")) + 
-    scale_color_manual(values=c("black", "black")) + 
-    geom_vline(xintercept = 20000, linetype="dotted", size=0.25)
-  
-  
-  if(save == TRUE) ggsave(paste("figures\\EVPPI-Trial",Sys.Date(),".png"), z, width=180, height=100, dpi=300, units='mm')
-  
-  return(z)  
-  
-}
-gen.evppi.trial.graph(evppi.trial.long)
+evppi.trial.long.pop <- evppi.trial.long
+evppi.trial.long.pop$VoI <- evppi.trial.long$VoI * effective.population
 
 evppi.stop.time <- Sys.time()
 evppi.stop.time - evppi.start.time
 
+# Plots 
+
+gen.evppi.graph(evppi.long.pop)
+gen.evppi.trial.graph(evppi.trial.long.pop)
+
+
 ## Save EVPPI's
 
-save(evppi.long, file=paste("stored results/evppi.",Sys.Date(),".Rda", sep=""))
-save(evppi.trial.long, file=paste("stored results/evppi.trial.",Sys.Date(),".Rda", sep=""))
-
-
+# save(evppi.long, file=paste("stored results/evppi.",Sys.Date(),".Rda", sep=""))
+# save(evppi.trial.long, file=paste("stored results/evppi.trial.",Sys.Date(),".Rda", sep=""))
 
 
 
