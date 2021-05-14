@@ -38,8 +38,8 @@ gen.clinical.characteristics <- function(){
 treatment.effect <- 0.6972504
 treatment.effect.sims <- exp(rnorm(sims, log(treatment.effect), 0.2216285))
 
-hi.risk <- 0.0142
-hi.risk.sims <- rbeta(sims, 16.74564893, 1162.525402)
+hi.risk <- 0.015783
+hi.risk.sims <- rbeta(sims, 100, 6236)
 
 non.hi.risk <- 0
 non.hi.risk.sims <- rbeta(sims, 9, 920-9) * 0
@@ -485,12 +485,11 @@ threshold.mat
 
 
 
-## PSA ## 
+## PSA - Base case ## 
 
-# Generate matrix to store results 
+
 psa.results <- matrix(0, sims, 4)
 colnames(psa.results) <- c("cost.placebo", "utility.placebo","cost.txa","utility.txa")
-
 pb = txtProgressBar(min = 0, max = sims, initial = 0, style = 3)
 
 for(p in 1:sims){
@@ -506,6 +505,34 @@ for(p in 1:sims){
   setTxtProgressBar(pb,p)
 }
 
+psa.incr <- data.frame(cost = psa.results[,3] - psa.results[,1], 
+                       utility = psa.results[,4] - psa.results[,2])
+
+# Proportion of simulations where TXA less effective
+mean((psa.results[,4] - psa.results[,2])<0)
+
+
+## PSA - Sensitivity ## 
+
+# psa.results.sens <- matrix(0, sims, 4)
+# colnames(psa.results.sens) <- c("cost.placebo", "utility.placebo","cost.txa","utility.txa")
+# tx.effect.alt <- treatment.effect.sims <- exp(rnorm(sims, log(0.90), 0.2216285))  
+# pb = txtProgressBar(min = 0, max = sims, initial = 0, style = 3)
+# 
+# for(p in 1:sims){
+#   
+#   # Subset and assign existing sims
+#   clin.sim <- unlist(clin.char.sims[p,])
+#   clin.sim[1] <- tx.effect.alt[p]
+#   dis.placebo.sim <- unlist(disability.placebo.sims[p,])
+#   dis.txa.sim <- unlist(disability.txa.sims[p,])
+#   utility.sim <- unlist(utility.sims[p,])
+#   cost.sim <- unlist(costs.sims[p,])
+#   
+#   psa.results.sens[p,] <- run.model(clin.sim, dis.placebo.sim, dis.txa.sim, utility.sim, cost.sim)[[1]] 
+#   setTxtProgressBar(pb,p)
+# }
+# 
 
 
 
@@ -549,7 +576,6 @@ gen.ceac.table <- function(results, lam = lambda){
   
 }
 
-
 ceac <- gen.ceac.table(psa.results)[[1]]
 evpi <- gen.ceac.table(psa.results)[[2]]
 
@@ -562,7 +588,7 @@ evpi.pop <- evpi[,2] * effective.population
 
 gen.ceac.graph = function(psa, save = FALSE) {
   
-  z = ggplot(psa) + geom_line(aes(x=lambda, y=prob.ce), size=0.6) + 
+  z = ggplot(psa) + geom_line(aes(x=lam, y=prob.ce), size=0.6) + 
     labs(x = "Willingness to pay (£)", text = element_text(size=4)) + 
     labs (y = "Probability cost-effective", text = element_text(size=4)) + theme_classic() +
     theme(legend.title = element_blank(), axis.title=element_text(face="bold"), 
@@ -570,8 +596,8 @@ gen.ceac.graph = function(psa, save = FALSE) {
           axis.title.y = element_text(margin = margin(t = 0, r = 7, b = 0, l = 3)), 
           panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
           legend.key.width=unit(1.8,"line"), text = element_text(size=7),
-          plot.margin=unit(c(1.2,0.5,0,1.2),"cm")) + 
-    scale_x_continuous(labels = scales::comma, breaks = c(seq(0,100000,5000)), limits = c(0,40000), expand = c(0, 0.1)) + 
+          plot.margin=unit(c(0.5,0.5,0,0.5),"cm")) + 
+    scale_x_continuous(labels = scales::comma, breaks = c(seq(0,100000,5000)), limits = c(0,max(psa$lam)), expand = c(0, 0.1)) + 
     scale_y_continuous(limits = c(0,1), breaks=seq(0,1,0.1), expand = c(0, 0)) + 
     geom_vline(xintercept = 20000, linetype="dotted", size=0.25)
   
@@ -584,7 +610,7 @@ gen.ceac.graph = function(psa, save = FALSE) {
 }
 gen.evpi.graph = function(evpi, save = FALSE) {
   
-  z = ggplot(evpi) + geom_line(aes(x=lambda, y=evpi.m), size=0.6) + 
+  z = ggplot(evpi) + geom_line(aes(x=lam, y=evpi.m), size=0.6) + 
     labs(x = "Willingness to pay (£)", text = element_text(size=4)) + 
     labs (y = "EVPI (£)", text = element_text(size=4)) + theme_classic() +
     theme(legend.title = element_blank(), axis.title=element_text(face="bold"), 
@@ -592,8 +618,8 @@ gen.evpi.graph = function(evpi, save = FALSE) {
           axis.title.y = element_text(margin = margin(t = 0, r = 7, b = 0, l = 3)), 
           panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
           legend.key.width=unit(1.8,"line"), text = element_text(size=7),
-          plot.margin=unit(c(1.2,0.5,0,1.2),"cm")) + 
-    scale_x_continuous(labels = scales::comma, breaks = c(seq(0,100000,5000)), limits = c(0,40000), expand = c(0, 0.1)) + 
+          plot.margin=unit(c(0.5,0.5,0,0.5),"cm")) + 
+    scale_x_continuous(labels = scales::comma, breaks = c(seq(0,100000,5000)), limits = c(0,max(evpi$lam)), expand = c(0, 0.1)) + 
     scale_y_continuous(expand = c(0, 0)) + 
     geom_vline(xintercept = 20000, linetype="dotted", size=0.25)
   
@@ -603,8 +629,9 @@ gen.evpi.graph = function(evpi, save = FALSE) {
   
 }
 
-gen.ceac.graph(ceac)
-gen.evpi.graph(evpi)
+gen.ceac.graph(ceac, TRUE)
+gen.evpi.graph(evpi, TRUE)
 
-
-
+# CEAC - Sensitivity analysis 
+# ceac.sens <- gen.ceac.table(psa.results.sens)[[1]]
+# gen.ceac.graph(ceac.sens)
