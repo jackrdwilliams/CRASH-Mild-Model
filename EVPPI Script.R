@@ -4,8 +4,8 @@
 
 source("CRASH-Mild R Model.R")
 
-inner.loops <- 500
-outer.loops <- 500
+inner.loops <- 1000
+outer.loops <- 1000
 
 # Sample all probabilistic parameters
 
@@ -115,7 +115,7 @@ gen.evppi.trial.graph = function(evppi, save = FALSE) {
   
 }
 
-pb = txtProgressBar(min = 0, max = outer.loops, initial = 0, style = 3)
+pb.trial = txtProgressBar(min = 0, max = outer.loops, initial = 0, style = 3)
 
 #### EVPPI for trial parameters ####
 
@@ -141,7 +141,7 @@ for(a in 1:outer.loops){
   nmb <- gen.nmb(inner.results)
   evppi.results.placebo[a,] <- nmb[[1]]
   evppi.results.txa[a,] <- nmb[[2]]
-  setTxtProgressBar(pb,outer.loops*5 + a)
+  setTxtProgressBar(pb.trial,a)
 }
 
 evppi.trial.parms <- gen.evppi.results(evppi.results.placebo, evppi.results.txa, lambda)

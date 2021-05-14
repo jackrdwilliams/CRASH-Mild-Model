@@ -436,9 +436,11 @@ run.model <- function(clinical = clin.char, dis.plac = disability.placebo, dis.t
   
   ## ICER ## 
   
-  icer <-  if((cost.sum[2] - cost.sum[1]) <= 0 & (utility.sum[2] - utility.sum[1]) > 0) "Intervention dominates" else 
-    if((cost.sum[2] - cost.sum[1]) > 0 & (utility.sum[2] - utility.sum[1]) <= 0 ) "Control dominates" else
-      (cost.sum[2] - cost.sum[1]) / (utility.sum[2] - utility.sum[1])  
+  icer <-   (cost.sum[2] - cost.sum[1]) / (utility.sum[2] - utility.sum[1])  
+  
+  # icer_alt <- if((cost.sum[2] - cost.sum[1]) <= 0 & (utility.sum[2] - utility.sum[1]) > 0) "Intervention dominates" else 
+  #   if((cost.sum[2] - cost.sum[1]) > 0 & (utility.sum[2] - utility.sum[1]) <= 0 ) "Control dominates" else
+  #     (cost.sum[2] - cost.sum[1]) / (utility.sum[2] - utility.sum[1])  
   
   
   if(output.type==1) {
@@ -457,31 +459,6 @@ run.model <- function(clinical = clin.char, dis.plac = disability.placebo, dis.t
 ## Deterministic results 
 run.model(clin.char, dis.plac = disability.placebo, dis.txa = disability.txa, util.values = utility,
           cost = costs, dec = utility.decrement, discount.c = disc.c, discount.o = disc.o)
-
-
-## DSA ## 
-
-
-## Head injury risk 
-
-clin.char.dsa <- clin.char
-tx.effect.goalseek <- function(x){
-  clin.char.dsa[1] <- x 
-  z <- run.model(clin.char.dsa, output.type = 2) - 20000
-  return(z)
-}
-
-hi.risk.thresholds <- seq(from = 0.0001, to = 0.005, by = 0.0001)
-threshold.mat <- matrix(0, ncol = 2, nrow = length(hi.risk.thresholds))
-threshold.mat[,1] <- hi.risk.thresholds
-colnames(threshold.mat) <- c("Hi Risk", "Tx effect")
-for(i in 1:length(hi.risk.thresholds)){
-  clin.char.dsa[2] <- hi.risk.thresholds[i] 
-  res <- uniroot(tx.effect.goalseek, c(0.1,0.9999999))
-  threshold.mat[i,2] <- res$root
-}
-
-threshold.mat
 
 
 
