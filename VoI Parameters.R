@@ -9,7 +9,7 @@ colnames(ons.pop) <- c("age", "male", "female")
 age.range <- c(70:90)
 incidence.ratio <- 260/369
 discount <- 0.035
-voi.th <- 10
+voi.th <- 20
 
 # Linear approximation and incidence tables
 est.male   <-  approx(data.m$Age, data.m$Male/100000, xout=c(age.range), method="linear")

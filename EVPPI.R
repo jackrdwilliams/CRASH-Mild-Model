@@ -104,7 +104,7 @@ gen.evppi.trial.graph = function(evppi, save = FALSE) {
           legend.key.width=unit(1.8,"line"), text = element_text(size=7),
           plot.margin=unit(c(0.5,0.5,0,0.5),"cm")) + 
     scale_x_continuous(labels = scales::comma, breaks = c(seq(0,100000,5000)), limits = c(0,max(evppi$lambda)), expand = c(0, 0.1)) + 
-    scale_y_continuous(labels = scales::comma, expand = c(0, 0)) + 
+    scale_y_continuous(labels = scales::comma, breaks = seq(0, 10000000, 2000000), limits = c(0, max(evppi$VoI)*1.1), expand = c(0, 0)) + 
     scale_linetype_manual(values=c("solid", "longdash")) + 
     scale_color_manual(values=c("black", "black")) + 
     geom_vline(xintercept = 20000, linetype="dotted", size=0.25)
