@@ -15,7 +15,7 @@ voi.th <- 10
 est.male   <-  approx(data.m$Age, data.m$Male/100000, xout=c(age.range), method="linear")
 est.female <-  approx(data.f$Age, data.f$Female/100000, xout=c(age.range), method="linear")
 incidence <- data.frame(age = est.male[[1]], male = est.male[[2]], female = est.female[[2]])
-
+apply(incidence[,2:3], 1, mean) * 100000 # incidence per 100,000 by age
 
 ## Multiply table with ratio of UK to global incidence (assumes UK incidence follows same trend)
 subset(ons.pop, age >= age.range[1]) 

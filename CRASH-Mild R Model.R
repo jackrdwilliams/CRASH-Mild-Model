@@ -11,7 +11,6 @@ library(dplyr)
 library(ggplot2)
 library(MCMCpack)
 
-source("VoI Parameters.R")
 
 # Model Options
 

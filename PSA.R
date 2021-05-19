@@ -1,7 +1,7 @@
 ## Probabilistic sensitivity analysis ## 
 
 source("CRASH-Mild R Model.R")
-
+source("VoI Parameters.R")
 
 ## PSA - Base case ## 
 
