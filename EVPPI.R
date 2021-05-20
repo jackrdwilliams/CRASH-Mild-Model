@@ -5,8 +5,8 @@
 source("CRASH-Mild R Model.R")
 source("PSA.R")
 
-inner.loops <- 3000
-outer.loops <- 3000
+inner.loops <- 1000
+outer.loops <- 1000
 
 # Sample all probabilistic parameters
 
@@ -42,7 +42,7 @@ gen.nmb <- function(results, lam = lambda){
   #colnames(nmb.t) <- as.character(lam)
   
   
-  return(list(nmb.t, nmb.p))
+  return(list(nmb.p, nmb.t))
   
 }
 
