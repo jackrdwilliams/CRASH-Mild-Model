@@ -5,8 +5,8 @@
 source("CRASH-Mild R Model.R")
 source("PSA.R")
 
-inner.loops <- 1000
-outer.loops <- 1000
+inner.loops <- 3000
+outer.loops <- 3000
 
 # Sample all probabilistic parameters
 

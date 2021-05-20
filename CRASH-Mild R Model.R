@@ -322,9 +322,7 @@ costs.sims <- gen.costs()[[2]]
 run.model <- function(clinical = clin.char, dis.plac = disability.placebo, dis.txa = disability.txa, util.values = utility, cost = costs, 
                       dec = utility.decrement, discount.c = disc.c, discount.o = disc.o, output.type = 1) {
   
-  ### TRACE ###
-  
-  # this unpacks each element of the clinical parameter to use in calculations below
+
   for(i in 1:length(clinical)) assign(names(clinical[i]),clinical[i])
   
   trace.names <- c("alive placebo", "dead placebo", "alive txa", "dead txa")
@@ -341,28 +339,19 @@ run.model <- function(clinical = clin.char, dis.plac = disability.placebo, dis.t
   
   
   # Calculate the first year Markov trace
+  matrix[2,2] <- matrix[1,2] + (hi.risk + non.hi.risk)
+  matrix[2,1] <- 1 - matrix[2,2]
+  matrix[2,4] <- matrix[1,4] + (hi.risk * treatment.effect + non.hi.risk)
+  matrix[2,3] <- 1 - matrix[2,4]
   
-  for(t in 2:13){
-    
-    if(t==2){
+  for(t in 3:13){
+    matrix[t,2] <- matrix[t-1,2] + matrix[t-1,1] * (1 - exp(-((risk.year1[t]/12)*smr.year1)))
+    matrix[t,1] <- 1 - matrix[t,2]
       
-      matrix[t,2] <- matrix[t-1,2] + (hi.risk + non.hi.risk)
-      matrix[t,1] <- 1 - matrix[t,2]
-      
-      matrix[t,4] <- matrix[t-1,4] + (hi.risk * treatment.effect + non.hi.risk)
-      matrix[t,3] <- 1 - matrix[t,4]
-      
-    } else {
-      
-      matrix[t,2] <- matrix[t-1,2] + matrix[t-1,1] * (1 - exp(-((risk.year1[t]/12)*smr.year1)))
-      matrix[t,1] <- 1 - matrix[t,2]
-      
-      matrix[t,4] <- matrix[t-1,4] + matrix[t-1,3] * (1 - exp(-((risk.year1[t]/12)*smr.year1)))
-      matrix[t,3] <- 1 - matrix[t,4]
-    }
-    
+    matrix[t,4] <- matrix[t-1,4] + matrix[t-1,3] * (1 - exp(-((risk.year1[t]/12)*smr.year1)))
+    matrix[t,3] <- 1 - matrix[t,4]
   }
-  
+    
   trace.y1 <- matrix
   
   # The main trace (using estimates from first year trace)
