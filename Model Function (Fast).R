@@ -88,7 +88,7 @@ run.model2 <- function(clinical = clin.char, dis.plac = disability.placebo, dis.
   
 }
 
-sims <- 200
+sims <- 10000
 
 time1 <- Sys.time()
 for(p in 1:sims){

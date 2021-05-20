@@ -154,10 +154,10 @@ return(utility.values)
 gen.utility.sims <- function(){
   
   utility.full <- rep(1, sims)
-  utility.good <- rbeta(sims, 49.9585894, 5.9235016)
-  utility.moderate <- rbeta(sims, 30.538, 14.7034815)
-  utility.severe <- rbeta(sims, 10.9303087,	17.6830648)
-  utility.vegetative <- rnorm(sims, -0.178, 0.19) ## needs normal distribution
+  utility.good <- rbeta(sims, 4331.027560, 513.522283)
+  utility.moderate <- rbeta(sims, 2481.512500, 1194.802315)
+  utility.severe <- rbeta(sims, 662.172521,	1071.263398)
+  utility.vegetative <- rnorm(sims, -0.178, 0.0775672) ## needs normal distribution
   
   utility.values <- data.frame(utility.full, utility.good, utility.moderate, utility.severe, utility.vegetative)
   
