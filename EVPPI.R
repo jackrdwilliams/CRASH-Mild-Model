@@ -116,10 +116,11 @@ gen.evppi.trial.graph = function(evppi, save = FALSE) {
   
 }
 
-pb.trial = txtProgressBar(min = 0, max = outer.loops, initial = 0, style = 3)
+
 
 #### EVPPI for trial parameters ####
 
+pb.trial = txtProgressBar(min = 0, max = outer.loops, initial = 0, style = 3)
 for(a in 1:outer.loops){
   
   ## 1. Select trial parameters
@@ -165,9 +166,8 @@ save(evppi.trial.long, file=paste("stored results/evppi.trial.",outer.loops, "."
 
 
 
+
 #### EVPPI for individual loops - 'Double Monte Carlo loop method' 
-
-
 
 pb = txtProgressBar(min = 0, max = outer.loops*5, initial = 0, style = 3)
 
@@ -175,13 +175,11 @@ pb = txtProgressBar(min = 0, max = outer.loops*5, initial = 0, style = 3)
 for(a in 1:outer.loops){
   
   ## 1. Select the 'partial' parameter from the outer loop 
-  
   clin.sim <- unlist(clin.char.sims[a,])
   
   for(b in 1:inner.loops){
     
     # Select traditional parameters, minus the outer loop parameter
-    
     
     clin.sim[4:5] <- unlist(clin.char.sims[b,4:5]) # Keep SMRs in PSA 
     dis.placebo.sim <- unlist(disability.placebo.sims[b,])
@@ -201,7 +199,7 @@ for(a in 1:outer.loops){
 evppi.head.injury <- gen.evppi.results(evppi.results.placebo, evppi.results.txa, lambda)
 
 
-## EVPPI loops - Head injury and TXA treatment effect
+## EVPPI loops - SMRs
 for(a in 1:outer.loops){
   
   ## 1. Select the 'partial' parameter from the outer loop 
@@ -236,6 +234,7 @@ for(a in 1:outer.loops){
   ## 1. Select the 'partial' parameter from the outer loop 
   dis.placebo.sim <- unlist(disability.placebo.sims[a,])
   dis.txa.sim <- unlist(disability.txa.sims[a,])
+
   
   for(b in 1:inner.loops){
     
@@ -303,8 +302,7 @@ for(a in 1:outer.loops){
     utility.sim <- unlist(utility.sims[b,])
     #cost.sim <- unlist(costs.sims[b,])
     
-    trace.results.sim <- gen.trace(clin.sim)
-    inner.results[b,] <- gen.outcomes(trace.results.sim, util = utility.sim, cost = cost.sim)[[1]] 
+    inner.results[b,] <- run.model(clin.sim, dis.placebo.sim, dis.txa.sim, utility.sim, cost.sim)[[1]] 
   }
   
   #after each inner loop PSA, calculate the mean NMB for each tx and store the results
@@ -324,7 +322,7 @@ evppi.wide <- data.frame(evppi.head.injury,
                          evppi.utility[,2],
                          evppi.costs[,2])
 
-colnames(evppi.wide) <- c('lambda', 'mortality risk and treatment effect', 'SMR', 'disability', 'utility', 'costs')
+colnames(evppi.wide) <- c('lambda', 'Mortality risk & Treatment effect', 'SMR', 'Outcomes (GOS)', 'Utility', 'Costs')
 
 evppi.long <- evppi.wide %>% gather(Parameters, VoI, 2:6)
 evppi.long.pop <- evppi.long
@@ -333,5 +331,5 @@ evppi.long.pop$VoI <- evppi.long$VoI * effective.population
 
 ## Save EVPPI's
 
-#save(evppi.long, file=paste("stored results/evppi.",Sys.Date(),".Rda", sep=""))
-
+save(evppi.long, file=paste("stored results/evppi.",Sys.Date(),".Rda", sep=""))
+gen.evppi.graph(evppi.long.pop, TRUE)
