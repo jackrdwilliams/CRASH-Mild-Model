@@ -3,6 +3,53 @@
 source("CRASH-Mild R Model.R")
 
 
+## DSA  ## 
+
+clin.char.dsa <- clin.char
+costs.dsa <- costs
+
+base.case.icer <- run.model(clin.char, disability.placebo, disability.txa, utility, costs, utility.decrement)[[2]]
+
+
+# Treatment effect
+dsa.res <- rep(NA, 6)
+dsa.names <- dsa.res
+disability.placebo.dsa <- disability.placebo
+disability.txa <- disability.placebo.dsa
+
+
+dsa.names[1] <- "Risk ratio = 0.95"
+clin.char.dsa[1] <- 0.95
+dsa.res[1] <- run.model(clin.char.dsa, disability.placebo, disability.txa, utility, costs, utility.decrement)[[2]]
+
+dsa.names[2] <- "Risk ratio = 0.99"
+clin.char.dsa[1] <- 0.99
+dsa.res[2] <- run.model(clin.char.dsa, disability.placebo, disability.txa, utility, costs, utility.decrement)[[2]]
+
+dsa.names[3] <- "Head injury risk = Howard et al (3.7%)"
+clin.char.dsa <- clin.char
+clin.char.dsa[2] <- 0.0372449
+dsa.res[3] <- run.model(clin.char.dsa, disability.placebo, disability.txa, utility, costs, utility.decrement)[[2]]
+
+dsa.names[4] <- "Head injury risk = Seno et al (4.8%)"
+clin.char.dsa[2] <- 0.0481928
+dsa.res[4] <- run.model(clin.char.dsa, disability.placebo, disability.txa, utility, costs, utility.decrement)[[2]]
+
+dsa.names[5] <- "Standardised mortality ratio following mild TBI applied for 1 year only"
+clin.char.dsa <- clin.char
+clin.char.dsa[5] <- 1
+dsa.res[5] <- run.model(clin.char.dsa, disability.placebo, disability.txa, utility, costs, utility.decrement)[[2]]
+
+dsa.names[6] <- "Post-discharge costs applied for 1 year only"
+
+costs.dsa[7:9] <- 0
+dsa.res[6] <- run.model(clin.char, disability.placebo, disability.txa, utility, costs.dsa, utility.decrement)[[2]]
+
+dsa.results <- data.frame(Scenario = dsa.names, ICER = dsa.res)
+
+## NEED TO ADD PLOT
+
+
 ## Head injury risk x Treatment effect threshold 
 
 clin.char.dsa <- clin.char

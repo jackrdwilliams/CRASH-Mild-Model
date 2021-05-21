@@ -33,8 +33,6 @@ mean((psa.results[,4] - psa.results[,2])<0)
 
 
 
-
-
 # Generate CEAC table
 
 gen.ceac.table <- function(results, lam = lambda){
@@ -228,4 +226,106 @@ gen.evpi.graph(evpi)
 
 ## ANCOVA ## 
 
+sim.parameters <- cbind(clin.char.sims[,c(1,2,4,5)], disability.placebo.sims[,2:5], utility.sims[,2:5], costs.sims[,2:9])
 
+psa.results <- as.data.frame(psa.results)
+incr.cost <- psa.results$cost.txa - psa.results$cost.placebo
+incr.qaly <- psa.results$utility.txa - psa.results$utility.placebo
+incr.nmb <- (incr.qaly * 20000) - incr.cost
+icer <- incr.cost / incr.qaly
+
+#### FUNCTIONS #### 
+gen.anova.results <- function(model){
+  
+  anova <- anova(model)
+  
+  mean.sq <- anova$`Mean Sq` 
+  total.sq <- sum(mean.sq) + deviance(model)
+  
+  prop.total.sq <- mean.sq / total.sq
+  prop.vars.sq <- mean.sq / sum(mean.sq)
+  
+  rownames <- rownames(anova) 
+  names <- c(rownames, "Total")
+  group <- c("Treatment effect", "Mortality risk", rep("SMR",2), 
+             rep("Outcomes post-TBI", 3), rep("Utility",4), "Hospital cost", 
+             rep("Post-discharge costs", 6), "Residuals", "Total")
+
+    
+  data <- data.frame(var = names, 
+                     group = group, 
+                     mean.squares = c(mean.sq, total.sq), 
+                     proportion.total = c(prop.total.sq,0),
+                     proportion.var = c(prop.vars.sq,0))
+
+  dplyr::arrange(data, proportion.var)
+  
+  rank <- data %>% arrange(desc(proportion.var))
+  
+  return(suppressWarnings(list(data, rank)))
+  
+}
+
+
+## Incremental Costs
+data.costs <- cbind(incr.cost, sim.parameters)
+model.costs <- lm(incr.cost~. , data.costs)
+
+## Incremental Outcomes
+data.qaly <- cbind(incr.qaly, sim.parameters)
+model.qaly <- lm(incr.qaly~. , data.qaly)
+
+## Incremental NMB
+data.nmb <- cbind(incr.nmb, sim.parameters)
+model.nmb <- lm(incr.nmb~. , data.nmb)
+
+## ICER
+data.icer <- cbind(icer, sim.parameters)
+model.icer <- lm(icer~. , data.icer)
+
+## Results/Output
+
+gen.anova.results(model.costs)[[1]]
+gen.anova.results(model.qaly)[[1]]
+gen.anova.results(model.nmb)[[1]]
+
+results.cost <- gen.anova.results(model.costs)[[1]]
+results.qaly <- gen.anova.results(model.qaly)[[1]]
+results.nmb <- gen.anova.results(model.nmb)[[1]]
+
+
+combine.rank <- function(results) {
+  
+  res <- results %>% dplyr::select(group, proportion.var) %>% filter(!(group == c("Residual", "Total"))) %>% 
+          group_by(group) %>% summarize(proportion.var=sum(proportion.var)) %>% arrange(desc(proportion.var))
+
+  return(res)
+
+  }
+
+
+rank.cost <- combine.rank(results.cost)
+rank.qaly <- combine.rank(results.qaly)
+rank.nmb <- combine.rank(results.nmb)
+
+
+gen.ancova.plot <- function(result){
+  
+  res <- as.data.frame(result)
+  
+  res$group <- factor(res$group, levels = rev(res$group))
+  ggplot(res, aes(x = proportion.var, y = group)) + geom_bar(stat="identity", width=0.5,  fill = "steelblue") +
+    labs(x = "Proportion of variance explained by parameter", text = element_text(size=4)) + 
+    theme_classic() + 
+    theme(axis.title= element_text(face="bold"), 
+          axis.title.x = element_text(margin = margin(t = 7, r = 0, b = 4, l = 0)), 
+          axis.title.y = element_blank(),
+          plot.margin=unit(c(0.5,0.5,0,0.5),"cm")) +
+    scale_x_continuous(labels = scales::percent, limits = c(0,max(res$proportion.var*1.05)), expand = c(0, 0.001)) 
+
+}
+
+
+gen.ancova.plot(rank.cost)  
+gen.ancova.plot(rank.qaly) 
+gen.ancova.plot(rank.nmb)  
