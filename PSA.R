@@ -248,19 +248,20 @@ gen.anova.results <- function(model){
   rownames <- rownames(anova) 
   names <- c(rownames, "Total")
   group <- c("Treatment effect", "Mortality risk", rep("SMR",2), 
-             rep("Outcomes post-TBI", 3), rep("Utility",4), "Hospital cost", 
+             rep("Outcomes post-TBI", 3), rep("Utility values",4), "Hospital costs", 
              rep("Post-discharge costs", 6), "Residuals", "Total")
 
-    
+
   data <- data.frame(var = names, 
                      group = group, 
                      mean.squares = c(mean.sq, total.sq), 
                      proportion.total = c(prop.total.sq,0),
                      proportion.var = c(prop.vars.sq,0))
-
+  
   dplyr::arrange(data, proportion.var)
   
-  res <- data %>% dplyr::select(group, proportion.var) %>% filter(!(group == c("Residual", "Total"))) %>% 
+  
+  res <- data %>% dplyr::select(group, proportion.var) %>% filter(!(group == c("Residuals", "Total"))) %>% 
     group_by(group) %>% summarize(proportion.var=sum(proportion.var)) %>% arrange(desc(proportion.var))
   
   return(as.data.frame(res))
@@ -303,11 +304,12 @@ gen.ancova.plot <- function(result1 = rank.cost, result2 = rank.qaly, result3 = 
   res$char = factor(res$char, levels = unique(res$char))
   
   plot <- ggplot(res, aes(x = proportion.var, y = group)) + geom_bar(stat="identity", width=0.5,  colour = "black", fill = "steelblue") +
-    labs(x = "Proportion of variance explained by parameter", text = element_text(size=4)) + 
+    labs(x = "Proportion of variance explained by parameter", text = element_text(size=2.5)) + 
     theme_classic() + 
     theme(axis.title= element_text(face="bold"), 
-          axis.title.x = element_text(margin = margin(t = 7, r = 0, b = 3, l = 0)), 
+          axis.title.x = element_text(size = 9, face = "bold", margin = margin(t = 7, r = 0, b = 3, l = 0)), 
           axis.title.y = element_blank(),
+          axis.text=element_text(size=7.5),
           plot.margin=unit(c(0.4,0.4,0,0.4),"cm"),
           panel.border = element_rect(colour = "black", fill=NA, size=0.85)) +
     scale_x_continuous(labels = scales::percent, limits = c(0,1), expand = c(0, 0.001)) + 
@@ -315,7 +317,7 @@ gen.ancova.plot <- function(result1 = rank.cost, result2 = rank.qaly, result3 = 
 
   plot <- plot + theme(panel.spacing.x=unit(1.3, "lines"))
   
-  if(save == TRUE) ggsave(paste("figures\\ANCOVA", name, Sys.Date(),".png"), plot, width=160, height=80, dpi=300, units='mm')
+  if(save == TRUE) ggsave(paste("figures\\ANCOVA", name, Sys.Date(),".png"), plot, width=135, height=65, dpi=300, units='mm')
   
   return(plot)
 }
