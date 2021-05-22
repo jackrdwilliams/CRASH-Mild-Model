@@ -260,9 +260,10 @@ gen.anova.results <- function(model){
 
   dplyr::arrange(data, proportion.var)
   
-  rank <- data %>% arrange(desc(proportion.var))
+  res <- data %>% dplyr::select(group, proportion.var) %>% filter(!(group == c("Residual", "Total"))) %>% 
+    group_by(group) %>% summarize(proportion.var=sum(proportion.var)) %>% arrange(desc(proportion.var))
   
-  return(suppressWarnings(list(data, rank)))
+  return(as.data.frame(res))
   
 }
 
@@ -279,53 +280,44 @@ model.qaly <- lm(incr.qaly~. , data.qaly)
 data.nmb <- cbind(incr.nmb, sim.parameters)
 model.nmb <- lm(incr.nmb~. , data.nmb)
 
-## ICER
-data.icer <- cbind(icer, sim.parameters)
-model.icer <- lm(icer~. , data.icer)
 
 ## Results/Output
 
-gen.anova.results(model.costs)[[1]]
-gen.anova.results(model.qaly)[[1]]
-gen.anova.results(model.nmb)[[1]]
+rank.cost <- gen.anova.results(model.costs)
+rank.qaly <- gen.anova.results(model.qaly)
+rank.nmb <- gen.anova.results(model.nmb)
 
-results.cost <- gen.anova.results(model.costs)[[1]]
-results.qaly <- gen.anova.results(model.qaly)[[1]]
-results.nmb <- gen.anova.results(model.nmb)[[1]]
+round(sum(rank.cost[1:2,2]),3)
+round(sum(rank.qaly[1:2,2]),3)
+round(sum(rank.nmb[1:2,2]),3)
 
 
-combine.rank <- function(results) {
+gen.ancova.plot <- function(result1 = rank.cost, result2 = rank.qaly, result3 = rank.nmb, save = FALSE, name = ""){
+
+  res1 <- data.frame(result1, char = "Incr. Costs")
+  res2 <- data.frame(result2, char = "Incr. QALYs")
+  res3 <- data.frame(result3, char = "Incr. NMB")
+
+  res <- rbind(res1, res2, res3)  
+  res$group <- factor(res$group, levels = rev(res1$group))
+  res$char = factor(res$char, levels = unique(res$char))
   
-  res <- results %>% dplyr::select(group, proportion.var) %>% filter(!(group == c("Residual", "Total"))) %>% 
-          group_by(group) %>% summarize(proportion.var=sum(proportion.var)) %>% arrange(desc(proportion.var))
-
-  return(res)
-
-  }
-
-
-rank.cost <- combine.rank(results.cost)
-rank.qaly <- combine.rank(results.qaly)
-rank.nmb <- combine.rank(results.nmb)
-
-
-gen.ancova.plot <- function(result){
-  
-  res <- as.data.frame(result)
-  
-  res$group <- factor(res$group, levels = rev(res$group))
-  ggplot(res, aes(x = proportion.var, y = group)) + geom_bar(stat="identity", width=0.5,  fill = "steelblue") +
+  plot <- ggplot(res, aes(x = proportion.var, y = group)) + geom_bar(stat="identity", width=0.5,  colour = "black", fill = "steelblue") +
     labs(x = "Proportion of variance explained by parameter", text = element_text(size=4)) + 
     theme_classic() + 
     theme(axis.title= element_text(face="bold"), 
-          axis.title.x = element_text(margin = margin(t = 7, r = 0, b = 4, l = 0)), 
+          axis.title.x = element_text(margin = margin(t = 7, r = 0, b = 3, l = 0)), 
           axis.title.y = element_blank(),
-          plot.margin=unit(c(0.5,0.5,0,0.5),"cm")) +
-    scale_x_continuous(labels = scales::percent, limits = c(0,max(res$proportion.var*1.05)), expand = c(0, 0.001)) 
+          plot.margin=unit(c(0.4,0.4,0,0.4),"cm"),
+          panel.border = element_rect(colour = "black", fill=NA, size=0.85)) +
+    scale_x_continuous(labels = scales::percent, limits = c(0,1), expand = c(0, 0.001)) + 
+    facet_wrap(~ char)
 
+  plot <- plot + theme(panel.spacing.x=unit(1.3, "lines"))
+  
+  if(save == TRUE) ggsave(paste("figures\\ANCOVA", name, Sys.Date(),".png"), plot, width=160, height=80, dpi=300, units='mm')
+  
+  return(plot)
 }
+gen.ancova.plot(save = TRUE)
 
-
-gen.ancova.plot(rank.cost)  
-gen.ancova.plot(rank.qaly) 
-gen.ancova.plot(rank.nmb)  
