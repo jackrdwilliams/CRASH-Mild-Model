@@ -62,6 +62,17 @@ gen.evppi.results <- function(evppi.results1 = evppi.results.placebo, evppi.resu
 
 gen.evppi.graph = function(evppi, save = FALSE) {
   
+  
+  gg_color_hue <- function(n) {
+    hues = seq(15, 375, length=n+1)
+    hcl(h=hues, l=65, c=100)[1:n]
+  }
+  
+  adj_names = sort(setdiff(unique(evppi$Parameters), "EVPI"))
+  values = gg_color_hue(length(adj_names))
+  names(values) = adj_names
+  values = c(values, c(EVPI="black"))
+  
   z = ggplot(evppi) + geom_line(aes(x=lambda, y=VoI, colour = Parameters), size=0.6) + 
     labs(x = "Willingness to pay (£)", text = element_text(size=4)) + 
     labs(y = "EVPPI (£)", text = element_text(size=4)) + theme_classic() +
@@ -70,14 +81,14 @@ gen.evppi.graph = function(evppi, save = FALSE) {
           axis.title.y = element_text(margin = margin(t = 0, r = 7, b = 0, l = 3)), 
           panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
           legend.key.width=unit(1.8,"line"), text = element_text(size=7),
-          plot.margin=unit(c(0.2,0,0,0.2),"cm")) + 
+          plot.margin=unit(c(0.2,0.5,0,0.2),"cm")) + 
     scale_x_continuous(labels = scales::comma, breaks = c(seq(0,100000,5000)), limits = c(0,max(evppi$lambda)), expand = c(0, 0.1)) + 
-    scale_y_continuous(labels = scales::comma, expand = c(0, 0)) + 
+    scale_y_continuous(labels = scales::comma, limits = c(0,10000000), expand = c(0, 0)) + 
+    scale_colour_manual(values=values)
+  
     geom_vline(xintercept = 20000, linetype="dotted", size=0.25)
   
-  
-  
-  if(save == TRUE) ggsave(paste("figures\\EVPPI",Sys.Date(),".png"), z, width=155, height=85, dpi=300, units='mm')
+    if(save == TRUE) ggsave(paste("figures\\EVPPI",Sys.Date(),".png"), z, width=165, height=90, dpi=300, units='mm')
   
   return(z)  
   
@@ -336,24 +347,22 @@ evppi.costs <- gen.evppi.results(evppi.results.placebo, evppi.results.txa, lambd
 
 ## Reshaping and plotting ## 
 
-evppi.wide <- data.frame(evppi.tx.effect, 
+evppi.wide <- data.frame(evpi,
+                         evppi.tx.effect[,2], 
                          evppi.head.injury[,2],
                          evppi.smr[,2],
                          evppi.disability[,2],
                          evppi.utility[,2],
                          evppi.costs[,2])
+colnames(evppi.wide) <- c('lambda', 'EVPI', 'Treatment effect',"Mortality risk", 'SMR', 'Outcomes post-TBI', 'Utility values', 'Costs')
 
-colnames(evppi.wide) <- c('lambda', 'Treatment effect',"Mortality risk", 'SMR', 'Outcomes post-TBI', 'Utility values', 'Costs')
-
-evppi.long <- evppi.wide %>% gather(Parameters, VoI, 2:6)
+evppi.long <- evppi.wide %>% gather(Parameters, VoI, 2:8)
 evppi.long.pop <- evppi.long
 evppi.long.pop$VoI <- evppi.long$VoI * effective.population
 
-
+evppi.long.pop$Parameters <- factor(evppi.long.pop$Parameters, levels = unique(evppi.long.pop$Parameters))
 ## Save EVPPI's
 
-save(evppi.long, file=paste("stored results/evppi.",Sys.Date(),".Rda", sep=""))
+#save(evppi.long, file=paste("stored results/evppi.parms.new.",Sys.Date(),".Rda", sep=""))
 gen.evppi.graph(evppi.long.pop, TRUE)
 
-data.frame(evpi.loevp/evpi[,2]/pi.long.pop, 
-gen.evppi.graph
