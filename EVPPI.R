@@ -8,15 +8,6 @@ source("PSA.R")
 inner.loops <- 1000
 outer.loops <- 1000
 
-# Sample all probabilistic parameters
-
-# clin.char.sims <- gen.clinical.characteristics()[[2]]
-# disability.placebo.sims <- gen.clinical.characteristics()[[5]]
-# disability.txa.sims <- disability.placebo.sims # same as placebo (equal for both arms)
-# #disability.txa.sims <- gen.clinical.characteristics()[[6]]
-# utility.sims <- gen.utility.sims()
-# costs.sims <- gen.costs(disability.placebo, disability.txa, disability.placebo.sims, disability.txa.sims)[[2]]
-
 # Generate matrices for EVPPI results to be stored in
 
 inner.results <- matrix(0, inner.loops, 4)
@@ -115,6 +106,8 @@ gen.evppi.trial.graph = function(evppi, save = FALSE) {
   return(z)  
   
 }
+
+
 
 
 
