@@ -136,94 +136,97 @@ gen.evpi.graph(evpi)
 
 
 
+subset(ceac, lam==20000)
+
+## PSA - Sensitivity ##
+
+gen.ceac.graph.sens = function(psa, save = FALSE) {
+
+  z = ggplot(psa) + geom_line(aes(x=lambda, y=Probability, colour = Treatment.Effect), size=0.6) +
+    labs(x = "Willingness to pay (£)", text = element_text(size=4)) +
+    labs(y = "Probability cost-effective", text = element_text(size=4)) + 
+    labs(colour = "Risk ratio (95% CI)", element_text(size=4)) + theme_classic() +
+    theme(legend.title = element_text(size=6.5, face = "bold"), axis.title=element_text(face="bold"),
+          axis.title.x = element_text(margin = margin(t = 7, r = 0, b = 3, l = 0)),
+          axis.title.y = element_text(margin = margin(t = 0, r = 7, b = 0, l = 3)),
+          panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+          legend.key.width=unit(1.2,"line"), text = element_text(size=7),
+          plot.margin=unit(c(0.5,0.5,0,0.5),"cm")) +
+    scale_x_continuous(labels = scales::comma, breaks = c(seq(0,100000,5000)), limits = c(0,max(psa$lam)), expand = c(0, 0.1)) +
+    scale_y_continuous(limits = c(0,1), breaks=seq(0,1,0.1), expand = c(0, 0)) +
+    geom_vline(xintercept = 20000, linetype="dotted", size=0.25)
 
 
-# PSA - Sensitivity ##
-# 
-# gen.ceac.graph.sens = function(psa, save = FALSE) {
-# 
-#   z = ggplot(psa) + geom_line(aes(x=lambda, y=Probability, colour = Treatment.Effect), size=0.6) +
-#     labs(x = "Willingness to pay (£)", text = element_text(size=4)) +
-#     labs (y = "Probability cost-effective", text = element_text(size=4)) + theme_classic() +
-#     theme(legend.title = element_blank(), axis.title=element_text(face="bold"),
-#           axis.title.x = element_text(margin = margin(t = 7, r = 0, b = 3, l = 0)),
-#           axis.title.y = element_text(margin = margin(t = 0, r = 7, b = 0, l = 3)),
-#           panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-#           legend.key.width=unit(1.8,"line"), text = element_text(size=7),
-#           plot.margin=unit(c(0.5,0.5,0,0.5),"cm")) +
-#     scale_x_continuous(labels = scales::comma, breaks = c(seq(0,100000,5000)), limits = c(0,max(psa$lam)), expand = c(0, 0.1)) +
-#     scale_y_continuous(limits = c(0,1), breaks=seq(0,1,0.1), expand = c(0, 0)) +
-#     geom_vline(xintercept = 20000, linetype="dotted", size=0.25)
-# 
-# 
-#   if(save == TRUE) ggsave(paste("figures\\CEAC.Sensitivity.Analysis",Sys.Date(),".png"), z, width=140, height=80, dpi=300, units='mm')
-# 
-# 
-#   return(z)
-# 
-# }
-# gen.evpi.graph.sens = function(evpi, save = FALSE) {
-#   
-#   z = ggplot(evpi) + geom_line(aes(x=lambda, y=VoI, colour = Treatment.Effect), size=0.6) + 
-#     labs(x = "Willingness to pay (£)", text = element_text(size=4)) + 
-#     labs (y = "EVPI (£)", text = element_text(size=4)) + theme_classic() +
-#     theme(legend.title = element_blank(), axis.title=element_text(face="bold"), 
-#           axis.title.x = element_text(margin = margin(t = 7, r = 0, b = 3, l = 0)), 
-#           axis.title.y = element_text(margin = margin(t = 0, r = 7, b = 0, l = 3)), 
-#           panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
-#           legend.key.width=unit(1.8,"line"), text = element_text(size=7),
-#           plot.margin=unit(c(0.5,0.5,0,0.5),"cm")) + 
-#     scale_x_continuous(labels = scales::comma, breaks = c(seq(0,100000,5000)), limits = c(0,max(evpi$lam)), expand = c(0, 0.1)) + 
-#     scale_y_continuous(labels = scales::comma, breaks = c(seq(0,100000000,5000000)), expand = c(0, 0)) + 
-#     geom_vline(xintercept = 20000, linetype="dotted", size=0.25)
-#   
-#   if(save == TRUE) ggsave(paste("figures\\EVPI.Sensitivity",Sys.Date(),".png"), z, width=140, height=80, dpi=300, units='mm')
-#   
-#   return(z)
-#   
-# }
-# 
-# psa.results.sens <- matrix(0, sims, 4)
-# colnames(psa.results.sens) <- c("cost.placebo", "utility.placebo","cost.txa","utility.txa")
-# pb = txtProgressBar(min = 0, max = sims, initial = 0, style = 3)
-# 
-# tx.effect.alt <- data.frame(a = exp(rnorm(sims, log(0.80), 0.2216285)),
-#                             b = exp(rnorm(sims, log(0.90), 0.2216285)),
-#                             c = exp(rnorm(sims, log(0.95), 0.2216285)))
-# res <- data.frame(lambda = lambda, a = NA, b = NA, c = NA)
-# evpi.res <- res
-# 
-# for(w in 1:3){
-#   for(p in 1:sims){
-#     # Subset and assign existing sims
-#     clin.sim[1] <- tx.effect.alt[p,w]
-#     clin.sim[2:5] <- unlist(clin.char.sims[p,2:5])
-#     dis.placebo.sim <- unlist(disability.placebo.sims[p,])
-#     dis.txa.sim <- unlist(disability.txa.sims[p,])
-#     utility.sim <- unlist(utility.sims[p,])
-#     cost.sim <- unlist(costs.sims[p,])
-# 
-#     psa.results.sens[p,] <- run.model(clin.sim, dis.placebo.sim, dis.txa.sim, utility.sim, cost.sim)[[1]]
-#     setTxtProgressBar(pb,p)
-#   }
-# 
-# res[,w+1] <- gen.ceac.table(psa.results.sens)[[1]][,2]
-# evpi.res[,w+1] <- gen.ceac.table(psa.results.sens)[[2]][,2]
-# }
-# 
-# colnames(res) <- c("lambda", "Risk ratio = 0.8", "Risk ratio = 0.9", "Risk ratio = 0.95")
-# colnames(evpi.res) <- c("lambda", "Risk ratio = 0.8", "Risk ratio = 0.9", "Risk ratio = 0.95")
-# 
-# psa.sens <- res %>% gather(Treatment.Effect, Probability, 2:4)
-# gen.ceac.graph.sens(psa.sens, TRUE)
-# 
-# evpi.s <- evpi.res %>% gather(Treatment.Effect, VoI, 2:4) 
-# evpi.sens <- evpi.s 
-# evpi.sens[,3] <- evpi.sens[,3] * effective.population
-# 
-# gen.evpi.graph.sens(evpi.sens, TRUE)
-# 
+  if(save == TRUE) ggsave(paste("figures\\CEAC.Sensitivity.Analysis",Sys.Date(),".png"), z, width=140, height=80, dpi=300, units='mm')
 
+
+  return(z)
+
+}
+gen.evpi.graph.sens = function(evpi, save = FALSE) {
+
+  z = ggplot(evpi) + geom_line(aes(x=lambda, y=VoI, colour = Treatment.Effect), size=0.6) +
+    labs(x = "Willingness to pay (£)", text = element_text(size=4)) +
+    labs(y = "EVPI (£)", text = element_text(size=4)) + 
+    labs(colour = "Risk ratio (95% CI)") + theme_classic() +
+    theme(legend.title = element_text(size=6.5, face = "bold"), axis.title=element_text(face="bold"),
+          axis.title.x = element_text(margin = margin(t = 7, r = 0, b = 3, l = 0)),
+          axis.title.y = element_text(margin = margin(t = 0, r = 7, b = 0, l = 3)),
+          panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+          legend.key.width=unit(1.2,"line"), text = element_text(size=7),
+          plot.margin=unit(c(0.5,0.5,0,0.5),"cm")) +
+    scale_x_continuous(labels = scales::comma, breaks = c(seq(0,100000,5000)), limits = c(0,max(evpi$lam)), expand = c(0, 0.1)) +
+    scale_y_continuous(labels = scales::comma, breaks = c(seq(0,100000000,5000000)), expand = c(0, 0)) +
+    geom_vline(xintercept = 20000, linetype="dotted", size=0.25)
+
+  if(save == TRUE) ggsave(paste("figures\\EVPI.Sensitivity",Sys.Date(),".png"), z, width=140, height=80, dpi=300, units='mm')
+
+  return(z)
+
+}
+
+psa.results.sens <- matrix(0, sims, 4)
+colnames(psa.results.sens) <- c("cost.placebo", "utility.placebo","cost.txa","utility.txa")
+pb = txtProgressBar(min = 0, max = sims, initial = 0, style = 3)
+
+tx.effect.alt <- data.frame(a = exp(rnorm(sims, log(0.80), 0.2216285)),
+                            b = exp(rnorm(sims, log(0.90), 0.2216285)),
+                            c = exp(rnorm(sims, log(0.95), 0.2216285)))
+res <- data.frame(lambda = lambda, a = NA, b = NA, c = NA)
+evpi.res <- res
+
+for(w in 1:3){
+  for(p in 1:sims){
+    # Subset and assign existing sims
+    clin.sim[1] <- tx.effect.alt[p,w]
+    clin.sim[2:5] <- unlist(clin.char.sims[p,2:5])
+    dis.placebo.sim <- unlist(disability.placebo.sims[p,])
+    dis.txa.sim <- unlist(disability.txa.sims[p,])
+    utility.sim <- unlist(utility.sims[p,])
+    cost.sim <- unlist(costs.sims[p,])
+
+    psa.results.sens[p,] <- run.model(clin.sim, dis.placebo.sim, dis.txa.sim, utility.sim, cost.sim)[[1]]
+    setTxtProgressBar(pb,p)
+  }
+
+res[,w+1] <- gen.ceac.table(psa.results.sens)[[1]][,2]
+evpi.res[,w+1] <- gen.ceac.table(psa.results.sens)[[2]][,2]
+}
+
+colnames(res) <- c("lambda", "0.8 (0.52-1.24)", "0.9 (0.58-1.39)", "0.95 (0.62-1.47)")
+colnames(evpi.res) <- colnames(res)
+
+psa.sens <- res %>% gather(Treatment.Effect, Probability, 2:4)
+gen.ceac.graph.sens(psa.sens, FALSE)
+
+evpi.s <- evpi.res %>% gather(Treatment.Effect, VoI, 2:4)
+evpi.sens <- evpi.s
+evpi.sens[,3] <- evpi.sens[,3] * effective.population
+
+gen.evpi.graph.sens(evpi.sens, FALSE)
+
+subset(psa.sens, lambda==20000)
+subset(evpi.sens, lambda==20000)
 ## ANCOVA ## 
 
 sim.parameters <- cbind(clin.char.sims[,c(1,2,4,5)], disability.placebo.sims[,2:5], utility.sims[,2:5], costs.sims[,2:9])
@@ -321,5 +324,5 @@ gen.ancova.plot <- function(result1 = rank.cost, result2 = rank.qaly, result3 = 
   
   return(plot)
 }
-gen.ancova.plot(save = TRUE)
+gen.ancova.plot(save = FALSE)
 

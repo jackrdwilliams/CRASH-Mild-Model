@@ -18,7 +18,6 @@ incidence <- data.frame(age = est.male[[1]], male = est.male[[2]], female = est.
 apply(incidence[,2:3], 1, mean) * 100000 # incidence per 100,000 by age
 
 ## Multiply table with ratio of UK to global incidence (assumes UK incidence follows same trend)
-subset(ons.pop, age >= age.range[1]) 
 population <- subset(ons.pop, age >= age.range[1]) 
 age.counts <- population[,2:3] * incidence[,2:3] * incidence.ratio  
 total <- sum(apply(age.counts, 2, sum))
