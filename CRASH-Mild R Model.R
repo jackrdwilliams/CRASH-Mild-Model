@@ -11,6 +11,8 @@ library(dplyr)
 library(ggplot2)
 library(MCMCpack)
 
+# as.integer(Sys.time())
+set.seed(29716)
 
 # Model Options
 
@@ -447,4 +449,3 @@ run.model <- function(clinical = clin.char, dis.plac = disability.placebo, dis.t
 ## Deterministic results 
 run.model(clin.char, dis.plac = disability.placebo, dis.txa = disability.txa, util.values = utility,
           cost = costs, dec = utility.decrement, discount.c = disc.c, discount.o = disc.o)
-

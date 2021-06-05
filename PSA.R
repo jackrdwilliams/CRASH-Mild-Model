@@ -4,7 +4,6 @@ source("CRASH-Mild R Model.R")
 source("VoI Parameters.R")
 
 ## PSA - Base case ## 
-
 sims <- 10000
 
 psa.results <- matrix(0, sims, 4)
@@ -28,7 +27,7 @@ psa.incr <- data.frame(cost = psa.results[,3] - psa.results[,1],
                        utility = psa.results[,4] - psa.results[,2])
 
 # Proportion of simulations where TXA less effective
-mean((psa.results[,4] - psa.results[,2])<0)
+mean((psa.results[,4] - psa.results[,2])<0)*100
 
 
 
@@ -127,16 +126,13 @@ gen.evpi.graph = function(evpi, save = FALSE) {
   
 }
 
-gen.ceac.graph(ceac)
-gen.evpi.graph(evpi)
-
-# CEAC - Sensitivity analysis 
-# ceac.sens <- gen.ceac.table(psa.results.sens)[[1]]
-# gen.ceac.graph(ceac.sens)
-
+gen.ceac.graph(ceac, FALSE)
+gen.evpi.graph(evpi, TRUE)
 
 
 subset(ceac, lam==20000)
+subset(evpi, lam==20000) * effective.population
+
 
 ## PSA - Sensitivity ##
 
@@ -176,7 +172,7 @@ gen.evpi.graph.sens = function(evpi, save = FALSE) {
           legend.key.width=unit(1.2,"line"), text = element_text(size=7),
           plot.margin=unit(c(0.5,0.5,0,0.5),"cm")) +
     scale_x_continuous(labels = scales::comma, breaks = c(seq(0,100000,5000)), limits = c(0,max(evpi$lam)), expand = c(0, 0.1)) +
-    scale_y_continuous(labels = scales::comma, breaks = c(seq(0,100000000,5000000)), expand = c(0, 0)) +
+    scale_y_continuous(labels = scales::comma, breaks = c(seq(0,100000000,10000000)), limits = c(0,max(evpi$VoI)*1.05), expand = c(0, 0)) +
     geom_vline(xintercept = 20000, linetype="dotted", size=0.25)
 
   if(save == TRUE) ggsave(paste("figures\\EVPI.Sensitivity",Sys.Date(),".png"), z, width=140, height=80, dpi=300, units='mm')
@@ -223,10 +219,12 @@ evpi.s <- evpi.res %>% gather(Treatment.Effect, VoI, 2:4)
 evpi.sens <- evpi.s
 evpi.sens[,3] <- evpi.sens[,3] * effective.population
 
-gen.evpi.graph.sens(evpi.sens, FALSE)
+gen.evpi.graph.sens(evpi.sens, TRUE)
 
 subset(psa.sens, lambda==20000)
 subset(evpi.sens, lambda==20000)
+
+
 ## ANCOVA ## 
 
 sim.parameters <- cbind(clin.char.sims[,c(1,2,4,5)], disability.placebo.sims[,2:5], utility.sims[,2:5], costs.sims[,2:9])

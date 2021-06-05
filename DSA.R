@@ -47,7 +47,6 @@ dsa.res[6] <- run.model(clin.char, disability.placebo, disability.txa, utility, 
 
 dsa.results <- data.frame(Scenario = dsa.names, ICER = dsa.res)
 
-## NEED TO ADD PLOT
 
 
 ## Head injury risk x Treatment effect threshold 
@@ -103,6 +102,6 @@ gen.threshold.dsa <- function(results, save = FALSE) {
   
 }
 
-gen.threshold.dsa(threshold.long, save = TRUE)
+gen.threshold.dsa(threshold.long, TRUE)
 
 
