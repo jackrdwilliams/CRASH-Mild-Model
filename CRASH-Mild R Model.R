@@ -377,9 +377,9 @@ run.model <- function(clinical = clin.char, dis.plac = disability.placebo, dis.t
   
   # discount
   
-  d <- matrix( rep(1/((1+discount.c)^seq(0, time.horizon, 1)),2), time.horizon + 1, 2)
-  o <- matrix( rep(1/((1+discount.o)^seq(0, time.horizon, 1)),2), time.horizon + 1, 2)
-  
+  d <- matrix(1/(1+disc.c)^(0:time.horizon), time.horizon + 1, 2)
+  o <- matrix(1/(1+disc.c)^(0:time.horizon), time.horizon + 1, 2)
+
   
   # Costs
 
