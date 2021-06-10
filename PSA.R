@@ -125,7 +125,7 @@ gen.evpi.graph = function(evpi, save = FALSE) {
 }
 
 gen.ceac.graph(ceac, FALSE)
-gen.evpi.graph(evpi, TRUE)
+gen.evpi.graph(evpi, FALSE)
 
 
 subset(ceac, lam==20000)
@@ -217,7 +217,7 @@ evpi.s <- evpi.res %>% gather(Treatment.Effect, VoI, 2:4)
 evpi.sens <- evpi.s
 evpi.sens[,3] <- evpi.sens[,3] * effective.population
 
-gen.evpi.graph.sens(evpi.sens, TRUE)
+gen.evpi.graph.sens(evpi.sens, FALSE)
 
 subset(psa.sens, lambda==20000)
 subset(evpi.sens, lambda==20000)

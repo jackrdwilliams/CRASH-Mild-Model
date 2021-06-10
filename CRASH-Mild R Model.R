@@ -32,6 +32,9 @@ lambda <- seq(from = 0, to = 50000, by = 100)
 year1.cycle <- 1:12/12
 
 
+discount.c <- matrix(1/(1+disc.c)^(0:time.horizon), time.horizon + 1, 2)
+discount.o <- matrix(1/(1+disc.o)^(0:time.horizon), time.horizon + 1, 2)
+
 ## Age trace
 
 ## Clinical parameters
@@ -320,10 +323,11 @@ costs <- gen.costs()[[1]]
 costs.sims <- gen.costs()[[2]]
 
 
+
 ##  TRACE CALCULATIONS AND OUTCOMES  ## 
 
 run.model <- function(clinical = clin.char, dis.plac = disability.placebo, dis.txa = disability.txa, util.values = utility, cost = costs, 
-                      dec = utility.decrement, discount.c = disc.c, discount.o = disc.o, output.type = 1) {
+                      dec = utility.decrement, d = discount.c, o = discount.o, output.type = 1) {
   
 
   for(i in 1:length(clinical)) assign(names(clinical[i]),clinical[i])
@@ -374,13 +378,7 @@ run.model <- function(clinical = clin.char, dis.plac = disability.placebo, dis.t
   trace <- list(trace.y1, trace.matrix)
 
   ## OUTCOMES 
-  
-  # discount
-  
-  d <- matrix(1/(1+disc.c)^(0:time.horizon), time.horizon + 1, 2)
-  o <- matrix(1/(1+disc.c)^(0:time.horizon), time.horizon + 1, 2)
 
-  
   # Costs
 
   st.mon.costs <- c(cost[4], cost[5], cost[6])
@@ -452,4 +450,4 @@ run.model <- function(clinical = clin.char, dis.plac = disability.placebo, dis.t
 
 ## Deterministic results 
 run.model(clin.char, dis.plac = disability.placebo, dis.txa = disability.txa, util.values = utility,
-          cost = costs, dec = utility.decrement, discount.c = disc.c, discount.o = disc.o)
+          cost = costs, dec = utility.decrement, d = discount.c, o = discount.o)

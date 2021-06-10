@@ -163,7 +163,7 @@ subset(evppi.trial.long.pop, lambda==20000)
 # Plots
 
 #gen.evppi.graph(evppi.long.pop)
-gen.evppi.trial.graph(evppi.trial.long.pop, TRUE)
+gen.evppi.trial.graph(evppi.trial.long.pop, FALSE)
 save(evppi.trial.long, file=paste("stored results/evppi.trial.",outer.loops, ".", inner.loops, Sys.Date(),".Rda", sep=""))
 subset(evppi.trial.long.pop, lambda==20000)
 
@@ -363,5 +363,5 @@ evppi.long.pop$Parameters <- factor(evppi.long.pop$Parameters, levels = unique(e
 ## Save EVPPI's
 
 save(evppi.long, file=paste("stored results/evppi.parms.new.",Sys.Date(),".Rda", sep=""))
-gen.evppi.graph(evppi.long.pop, TRUE)
+gen.evppi.graph(evppi.long.pop, FALSE)
 
