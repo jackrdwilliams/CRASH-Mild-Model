@@ -39,7 +39,7 @@ gen.clinical.characteristics <- function(){
 treatment.effect <- 0.6972504
 treatment.effect.sims <- exp(rnorm(sims, log(treatment.effect), 0.2216285))
 
-hi.risk <- 0.015783
+hi.risk <- 0.015782828
 hi.risk.sims <- rbeta(sims, 100, 6236)
 
 non.hi.risk <- 0
@@ -214,8 +214,6 @@ utility.decrement <- gen.utility.dec()
 
 # Treatment costs 
 
-## need to add tx effect costs
-
 gen.costs <- function(){
 
   cost.txa.dose <- 1.5
@@ -332,7 +330,7 @@ run.model <- function(clinical = clin.char, dis.plac = disability.placebo, dis.t
   matrix[1,] <- c(1,0,1,0)
   colnames(matrix) <- trace.names
   
-  # Calculate the annual risk of death, and make sure it changes at correct point 
+  # Calculate the annual risk of death
   age.trace <- seq(from = age, to = age+1, by= 1/12)
   age.trace.floor <- floor(age.trace)
   a <- as.vector(acm %>% filter(age == unique(age.trace.floor)[[1]])) 
@@ -393,7 +391,9 @@ run.model <- function(clinical = clin.char, dis.plac = disability.placebo, dis.t
   cost.matrix <- matrix(0, time.horizon + 1, 2) # placebo / txa
   
   cost.matrix[1,] <- cost[2:3] + (cost[1] * c(0,1)) 
-  cost.matrix[2,] <- trace[[2]][2,c(1,3)] * c(st.mon.plac, st.mon.txa)
+  #cost.matrix[2,] <- trace[[2]][2,c(1,3)] * c(st.mon.plac, st.mon.txa)
+  cost.matrix[2,] <- apply(trace.y1[2:13, c(1,3)], 2, mean) * c(st.mon.plac, st.mon.txa)
+  
   cost.matrix[3:(time.horizon+1),] <- trace[[2]][3:(time.horizon+1),c(1,3)] * c(lt.mon.plac, lt.mon.txa)
   
   cost.matrix.d <- cost.matrix * d
@@ -413,8 +413,11 @@ run.model <- function(clinical = clin.char, dis.plac = disability.placebo, dis.t
   
   utility.matrix <- matrix(0, time.horizon + 1, 2) # placebo / txa
   
-  utility.matrix[2,1] <- mean(trace[[1]][2:13,1]) * (util.values.plac - dec[2,2])
-  utility.matrix[2,2] <- mean(trace[[1]][2:13,3]) * (util.values.txa - dec[2,2])
+  # utility.matrix[2,1] <- mean(trace[[1]][2:13,1]) * (util.values.plac - dec[2,2])
+  # utility.matrix[2,2] <- mean(trace[[1]][2:13,3]) * (util.values.txa - dec[2,2])
+  
+  utility.matrix[2,1] <- sum(trace[[1]][2:13,1] * (util.values.plac - c(rep(dec[1,2],11), dec[2,2]))/12)
+  utility.matrix[2,2] <- sum(trace[[1]][2:13,3] * (util.values.txa -  c(rep(dec[1,2],11), dec[2,2]))/12)
   
   utility.matrix[3:(time.horizon+1),1] <- trace[[2]][3:(time.horizon+1),1] * (util.values.plac - dec[3:(time.horizon+1),2]) 
   utility.matrix[3:(time.horizon+1),2] <- trace[[2]][3:(time.horizon+1),3] * (util.values.txa - dec[3:(time.horizon+1),2])
@@ -427,11 +430,6 @@ run.model <- function(clinical = clin.char, dis.plac = disability.placebo, dis.t
   ## ICER ## 
   
   icer <-   (cost.sum[2] - cost.sum[1]) / (utility.sum[2] - utility.sum[1])  
-  
-  # icer_alt <- if((cost.sum[2] - cost.sum[1]) <= 0 & (utility.sum[2] - utility.sum[1]) > 0) "Intervention dominates" else 
-  #   if((cost.sum[2] - cost.sum[1]) > 0 & (utility.sum[2] - utility.sum[1]) <= 0 ) "Control dominates" else
-  #     (cost.sum[2] - cost.sum[1]) / (utility.sum[2] - utility.sum[1])  
-  
   
   if(output.type==1) {
     return(list(c(cost.placebo = cost.sum[1], 
