@@ -30,8 +30,6 @@ psa.incr <- data.frame(cost = psa.results[,3] - psa.results[,1],
 mean((psa.results[,4] - psa.results[,2])<0)*100
 
 
-
-
 # Generate CEAC table
 
 gen.ceac.table <- function(results, lam = lambda){
@@ -140,7 +138,7 @@ gen.ceac.graph.sens = function(psa, save = FALSE) {
 
   z = ggplot(psa) + geom_line(aes(x=lambda, y=Probability, colour = Treatment.Effect), size=0.6) +
     labs(x = "Willingness to pay (£)", text = element_text(size=4)) +
-    labs(y = "Probability cost-effective", text = element_text(size=4)) + 
+    labs(y = "Probability cost-effective", text = element_text(size=4)) +
     labs(colour = "Risk ratio (95% CI)", element_text(size=4)) + theme_classic() +
     theme(legend.title = element_text(size=6.5, face = "bold"), axis.title=element_text(face="bold"),
           axis.title.x = element_text(margin = margin(t = 7, r = 0, b = 3, l = 0)),
@@ -163,7 +161,7 @@ gen.evpi.graph.sens = function(evpi, save = FALSE) {
 
   z = ggplot(evpi) + geom_line(aes(x=lambda, y=VoI, colour = Treatment.Effect), size=0.6) +
     labs(x = "Willingness to pay (£)", text = element_text(size=4)) +
-    labs(y = "EVPI (£)", text = element_text(size=4)) + 
+    labs(y = "EVPI (£)", text = element_text(size=4)) +
     labs(colour = "Risk ratio (95% CI)") + theme_classic() +
     theme(legend.title = element_text(size=6.5, face = "bold"), axis.title=element_text(face="bold"),
           axis.title.x = element_text(margin = margin(t = 7, r = 0, b = 3, l = 0)),
@@ -281,7 +279,6 @@ model.qaly <- lm(incr.qaly~. , data.qaly)
 ## Incremental NMB
 data.nmb <- cbind(incr.nmb, sim.parameters)
 model.nmb <- lm(incr.nmb~. , data.nmb)
-
 
 ## Results/Output
 
