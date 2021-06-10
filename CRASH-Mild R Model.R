@@ -29,6 +29,9 @@ time.horizon = min(60, 100-ceiling(age))
 
 lambda <- seq(from = 0, to = 50000, by = 100)
 
+year1.cycle <- 1:12/12
+
+
 ## Age trace
 
 ## Clinical parameters
@@ -39,7 +42,7 @@ gen.clinical.characteristics <- function(){
 treatment.effect <- 0.6972504
 treatment.effect.sims <- exp(rnorm(sims, log(treatment.effect), 0.2216285))
 
-hi.risk <- 0.015782828
+hi.risk <- 100 / 6336
 hi.risk.sims <- rbeta(sims, 100, 6236)
 
 non.hi.risk <- 0
@@ -377,6 +380,7 @@ run.model <- function(clinical = clin.char, dis.plac = disability.placebo, dis.t
   d <- matrix( rep(1/((1+discount.c)^seq(0, time.horizon, 1)),2), time.horizon + 1, 2)
   o <- matrix( rep(1/((1+discount.o)^seq(0, time.horizon, 1)),2), time.horizon + 1, 2)
   
+  
   # Costs
 
   st.mon.costs <- c(cost[4], cost[5], cost[6])
@@ -416,8 +420,10 @@ run.model <- function(clinical = clin.char, dis.plac = disability.placebo, dis.t
   # utility.matrix[2,1] <- mean(trace[[1]][2:13,1]) * (util.values.plac - dec[2,2])
   # utility.matrix[2,2] <- mean(trace[[1]][2:13,3]) * (util.values.txa - dec[2,2])
   
-  utility.matrix[2,1] <- sum(trace[[1]][2:13,1] * (util.values.plac - c(rep(dec[1,2],11), dec[2,2]))/12)
-  utility.matrix[2,2] <- sum(trace[[1]][2:13,3] * (util.values.txa -  c(rep(dec[1,2],11), dec[2,2]))/12)
+  dec.year1 <- dec[findInterval(age + year1.cycle, dec[,1]),2]
+
+  utility.matrix[2,1] <- sum(trace[[1]][2:13,1] * (util.values.plac - dec.year1)/12)
+  utility.matrix[2,2] <- sum(trace[[1]][2:13,3] * (util.values.txa -  dec.year1)/12)
   
   utility.matrix[3:(time.horizon+1),1] <- trace[[2]][3:(time.horizon+1),1] * (util.values.plac - dec[3:(time.horizon+1),2]) 
   utility.matrix[3:(time.horizon+1),2] <- trace[[2]][3:(time.horizon+1),3] * (util.values.txa - dec[3:(time.horizon+1),2])
