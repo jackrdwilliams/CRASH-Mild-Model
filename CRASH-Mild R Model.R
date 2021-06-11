@@ -222,9 +222,12 @@ utility.decrement <- gen.utility.dec()
 
 gen.costs <- function(){
 
+  inflation <- 314.915918 / c(301.150189, 282.5, 249.8)
+  names(inflation) <- c("2007", "2012", "2018")
+  
   cost.txa.dose <- 1.5
   cost.sodium <- 0 # 55p for 100ml, 270 for 500ml 
-  cost.needle <- 0.054013349
+  cost.needle <- (570/111) + 0.12 # 12p needle syringe, £570 per year pre-drawn 
   cost.nurse <- 0
 
   cost.treatment <- sum(cost.txa.dose, cost.sodium, cost.needle, cost.nurse)
@@ -236,9 +239,9 @@ gen.costs <- function(){
   los.txa <- los.placebo
   prop.neuro <- 0.0345
   
-  hospital.cost.initial <- 455.45033602
-  hospital.cost.day <- 313.8757956
-  neurosurgery.cost <- 7439.86435702
+  hospital.cost.initial <- 455.45033602 * inflation[1]
+  hospital.cost.day <- 313.8757956 * inflation[1]
+  neurosurgery.cost <- 7439.86435702 * inflation[1]
 
   hospital.cost.placebo <- hospital.cost.initial + hospital.cost.day * los.placebo + prop.neuro * neurosurgery.cost
   hospital.cost.txa <- hospital.cost.initial + hospital.cost.day * los.txa + prop.neuro * neurosurgery.cost
@@ -246,15 +249,14 @@ gen.costs <- function(){
 
   # Monitoring costs 
 
-  cost.good.st <- 302.56133028
-  cost.moderate.st <- 21633.13511509
-  cost.severe.st <- 42736.78790218
+  cost.good.st <- 240 * inflation[3]
+  cost.moderate.st <- 17160  * inflation[3]
+  cost.severe.st <- 33900 * inflation[3]
 
 
-  cost.good.lt <- 26.75391869
-  cost.moderate.lt <- 1783.59457945
-  cost.severe.lt <- 13934.33265195
-
+  cost.good.lt <- 24  * inflation[2]
+  cost.moderate.lt <- 1600 * inflation[2]
+  cost.severe.lt <- 12500 * inflation[2]
 
 
   # monitoring.costs.st <- sum(c(rep(cost.good.st,2), cost.moderate.st, rep(cost.severe.st, 2)) * dis.plac) / sum(dis.plac)
@@ -271,25 +273,25 @@ gen.costs <- function(){
   names(costs) <- cost.names
   
 
-  # Simulations - to be input later on (PLACEHOLDER)
+  # Simulations 
+  
+  cost.needle.sims <- ((570/111) * runif(sims, 0.5, 1.5)) + 0.12
   
   prob.neuro.sims <- rbeta(sims, 23.83398, 	667.00607)
-  
-  cost.treatment.sims <- rep(cost.treatment, sims)  * 1 ## PLACEHOLDER
+
+  cost.treatment.sims <- rep(sum(cost.txa.dose, cost.sodium, cost.nurse),sims) + cost.needle.sims
   hospital.cost.placebo.sims <- rep(hospital.cost.placebo, sims) * 1 + rep(neurosurgery.cost, sims) * prob.neuro.sims  ## PLACEHOLDER
   hospital.cost.txa.sims <- rep(hospital.cost.txa, sims) * 1 + rep(neurosurgery.cost, sims) * prob.neuro.sims ## PLACEHOLDER
   
   # Monitoring costs # 
+
+  cost.good.st.sims <- rgamma(sims, shape = (240^2 / 48^2), scale = 48^2 / 240 ) * inflation[3]
+  cost.moderate.st.sims <- rgamma(sims, shape = (17160^2 / 3432^2), scale = 3432^2 / 17160 ) * inflation[3]
+  cost.severe.st.sims <- rgamma(sims, shape = (33900^2 / 6780^2), scale = 6780^2 / 33900 ) * inflation[3]
   
-  inf0607 <- 314.9/249.8
-  
-  cost.good.st.sims <- rgamma(sims, shape = (240^2 / 48^2), scale = 48^2 / 240 ) * inf0607
-  cost.moderate.st.sims <- rgamma(sims, shape = (17160^2 / 3432^2), scale = 3432^2 / 17160 ) * inf0607
-  cost.severe.st.sims <- rgamma(sims, shape = (33900^2 / 6780^2), scale = 6780^2 / 33900 ) * inf0607
-  
-  cost.good.lt.sims <- rgamma(sims, shape = (24^2 / 4.8^2), scale = 4.8^2 / 24 ) * inf0607
-  cost.moderate.lt.sims <- rgamma(sims, shape = (1600^2 / 320^2), scale = 320^2 / 1600 ) * inf0607
-  cost.severe.lt.sims <- rgamma(sims, shape = (12500^2 / 2500^2), scale = 2500^2 / 12500 ) * inf0607
+  cost.good.lt.sims <- rgamma(sims, shape = (24^2 / 4.8^2), scale = 4.8^2 / 24 ) * inflation[2]
+  cost.moderate.lt.sims <- rgamma(sims, shape = (1600^2 / 320^2), scale = 320^2 / 1600 ) * inflation[2]
+  cost.severe.lt.sims <- rgamma(sims, shape = (12500^2 / 2500^2), scale = 2500^2 / 12500 ) * inflation[2]
   
 #  df.st <- data.frame(cost.good.st.sims, cost.good.st.sims, cost.moderate.st.sims, cost.severe.st.sims, cost.severe.st.sims) 
 #  df.lt <- data.frame(cost.good.lt.sims, cost.good.lt.sims, cost.moderate.lt.sims, cost.severe.lt.sims, cost.severe.lt.sims)
