@@ -29,6 +29,12 @@ time.horizon = min(60, 100-ceiling(age))
 
 lambda <- seq(from = 0, to = 50000, by = 100)
 
+year1.cycle <- 1:12/12
+
+
+discount.c <- matrix(1/(1+disc.c)^(0:time.horizon), time.horizon + 1, 2)
+discount.o <- matrix(1/(1+disc.o)^(0:time.horizon), time.horizon + 1, 2)
+
 ## Age trace
 
 ## Clinical parameters
@@ -41,7 +47,7 @@ treatment.effect.log.se <- (log(1.076571) - log(0.45158))/(2*1.96)
 
 treatment.effect.sims <- exp(rnorm(sims, log(treatment.effect), treatment.effect.log.se))
 
-hi.risk <- 0.015783
+hi.risk <- 100 / 6336
 hi.risk.sims <- rbeta(sims, 100, 6236)
 
 non.hi.risk <- 0
@@ -301,9 +307,12 @@ utility.decrement <- gen.utility.dec()
 
 gen.costs <- function(){
 
+  inflation <- 314.915918 / c(301.150189, 282.5, 249.8)
+  names(inflation) <- c("2007", "2012", "2018")
+  
   cost.txa.dose <- 1.5
   cost.sodium <- 0 # 55p for 100ml, 270 for 500ml 
-  cost.needle <- 0.054013349
+  cost.needle <- (570/111) + 0.12 # 12p needle syringe, £570 per year pre-drawn 
   cost.nurse <- 0
 
   cost.treatment <- sum(cost.txa.dose, cost.sodium, cost.needle, cost.nurse)
@@ -315,9 +324,9 @@ gen.costs <- function(){
   los.txa <- los.placebo
   prop.neuro <- 0.0345
   
-  hospital.cost.initial <- 455.45033602
-  hospital.cost.day <- 313.8757956
-  neurosurgery.cost <- 7439.86435702
+  hospital.cost.initial <- 455.45033602 * inflation[1]
+  hospital.cost.day <- 313.8757956 * inflation[1]
+  neurosurgery.cost <- 7439.86435702 * inflation[1]
 
   hospital.cost.placebo <- hospital.cost.initial + hospital.cost.day * los.placebo + prop.neuro * neurosurgery.cost
   hospital.cost.txa <- hospital.cost.initial + hospital.cost.day * los.txa + prop.neuro * neurosurgery.cost
@@ -325,58 +334,45 @@ gen.costs <- function(){
 
   # Monitoring costs 
 
-  cost.good.st <- 302.56133028
-  cost.moderate.st <- 21633.13511509
-  cost.severe.st <- 42736.78790218
+  cost.good.st <- 240 * inflation[3]
+  cost.moderate.st <- 17160  * inflation[3]
+  cost.severe.st <- 33900 * inflation[3]
+
+  cost.good.lt <- 24  * inflation[2]
+  cost.moderate.lt <- 1600 * inflation[2]
+  cost.severe.lt <- 12500 * inflation[2]
 
 
-  cost.good.lt <- 26.75391869
-  cost.moderate.lt <- 1783.59457945
-  cost.severe.lt <- 13934.33265195
+  # monitoring.costs.st <- sum(c(rep(cost.good.st,2), cost.moderate.st, rep(cost.severe.st, 2)) * dis.plac) / sum(dis.plac)
+  # monitoring.costs.st <- sum(c(rep(cost.good.st,2), cost.moderate.st, rep(cost.severe.st, 2)) * dis.txa) / sum(dis.txa)
+  # 
+  # monitoring.costs.lt <- sum(c(rep(cost.good.lt,2), cost.moderate.lt, rep(cost.severe.lt, 2)) * dis.plac) / sum(dis.plac)
+  # monitoring.costs.lt <- sum(c(rep(cost.good.lt,2), cost.moderate.lt, rep(cost.severe.lt, 2)) * dis.txa) / sum(dis.txa)
 
-  # Adverse events # 
-  
-  pe <- 0
-  dvt <- 0
-  stroke <- 0
-  mi <- 0
-  renal <- 0
-  sepsis <- 0
-  seizure <- 0
-  gi <- 0
-  
-  
-  
-  
-  
+
   cost.names <- c("treatment", "hospital.placebo", "hospital.txa", "st.good", "st.mod", "st.sev", "lt.good", "lt.mod", "lt.sev")
   costs <- c(cost.treatment, hospital.cost.placebo, hospital.cost.txa, cost.good.st, cost.moderate.st, cost.severe.st,
              cost.good.lt, cost.moderate.lt, cost.severe.lt)
   
   names(costs) <- cost.names
   
-
-  
-  
-  # Simulations - to be input later on (PLACEHOLDER)
+  cost.needle.sims <- ((570/111) * runif(sims, 0.5, 1.5)) + 0.12
   
   prob.neuro.sims <- rbeta(sims, 23.83398, 	667.00607)
-  
-  cost.treatment.sims <- rep(cost.treatment, sims)  * 1 ## PLACEHOLDER
+
+  cost.treatment.sims <- rep(sum(cost.txa.dose, cost.sodium, cost.nurse),sims) + cost.needle.sims
   hospital.cost.placebo.sims <- rep(hospital.cost.placebo, sims) * 1 + rep(neurosurgery.cost, sims) * prob.neuro.sims  ## PLACEHOLDER
   hospital.cost.txa.sims <- rep(hospital.cost.txa, sims) * 1 + rep(neurosurgery.cost, sims) * prob.neuro.sims ## PLACEHOLDER
   
   # Monitoring costs # 
+
+  cost.good.st.sims <- rgamma(sims, shape = (240^2 / 48^2), scale = 48^2 / 240 ) * inflation[3]
+  cost.moderate.st.sims <- rgamma(sims, shape = (17160^2 / 3432^2), scale = 3432^2 / 17160 ) * inflation[3]
+  cost.severe.st.sims <- rgamma(sims, shape = (33900^2 / 6780^2), scale = 6780^2 / 33900 ) * inflation[3]
   
-  inf0607 <- 314.9/249.8
-  
-  cost.good.st.sims <- rgamma(sims, shape = (240^2 / 48^2), scale = 48^2 / 240 ) * inf0607
-  cost.moderate.st.sims <- rgamma(sims, shape = (17160^2 / 3432^2), scale = 3432^2 / 17160 ) * inf0607
-  cost.severe.st.sims <- rgamma(sims, shape = (33900^2 / 6780^2), scale = 6780^2 / 33900 ) * inf0607
-  
-  cost.good.lt.sims <- rgamma(sims, shape = (24^2 / 4.8^2), scale = 4.8^2 / 24 ) * inf0607
-  cost.moderate.lt.sims <- rgamma(sims, shape = (1600^2 / 320^2), scale = 320^2 / 1600 ) * inf0607
-  cost.severe.lt.sims <- rgamma(sims, shape = (12500^2 / 2500^2), scale = 2500^2 / 12500 ) * inf0607
+  cost.good.lt.sims <- rgamma(sims, shape = (24^2 / 4.8^2), scale = 4.8^2 / 24 ) * inflation[2]
+  cost.moderate.lt.sims <- rgamma(sims, shape = (1600^2 / 320^2), scale = 320^2 / 1600 ) * inflation[2]
+  cost.severe.lt.sims <- rgamma(sims, shape = (12500^2 / 2500^2), scale = 2500^2 / 12500 ) * inflation[2]
   
   
 
@@ -401,10 +397,11 @@ costs <- gen.costs()[[1]]
 costs.sims <- gen.costs()[[2]]
 
 
+
 ##  TRACE CALCULATIONS AND OUTCOMES  ## 
 
 run.model <- function(clinical = clin.char, dis.plac = disability.placebo, dis.txa = disability.txa, util.values = utility, cost = costs, 
-                      dec = utility.decrement, discount.c = disc.c, discount.o = disc.o, output.type = 1) {
+                      dec = utility.decrement, d = discount.c, o = discount.o, output.type = 1) {
   
 
   for(i in 1:length(clinical)) assign(names(clinical[i]),clinical[i])
@@ -414,7 +411,7 @@ run.model <- function(clinical = clin.char, dis.plac = disability.placebo, dis.t
   matrix[1,] <- c(1,0,1,0)
   colnames(matrix) <- trace.names
   
-  # Calculate the annual risk of death, and make sure it changes at correct point 
+  # Calculate the annual risk of death
   age.trace <- seq(from = age, to = age+1, by= 1/12)
   age.trace.floor <- floor(age.trace)
   a <- as.vector(acm %>% filter(age == unique(age.trace.floor)[[1]])) 
@@ -455,12 +452,7 @@ run.model <- function(clinical = clin.char, dis.plac = disability.placebo, dis.t
   trace <- list(trace.y1, trace.matrix)
 
   ## OUTCOMES 
-  
-  # discount
-  
-  d <- matrix( rep(1/((1+discount.c)^seq(0, time.horizon, 1)),2), time.horizon + 1, 2)
-  o <- matrix( rep(1/((1+discount.o)^seq(0, time.horizon, 1)),2), time.horizon + 1, 2)
-  
+
   # Costs
 
   st.mon.costs <- c(cost[4], cost[5], cost[6])
@@ -475,7 +467,9 @@ run.model <- function(clinical = clin.char, dis.plac = disability.placebo, dis.t
   cost.matrix <- matrix(0, time.horizon + 1, 2) # placebo / txa
   
   cost.matrix[1,] <- cost[2:3] + (cost[1] * c(0,1)) 
-  cost.matrix[2,] <- trace[[2]][2,c(1,3)] * c(st.mon.plac, st.mon.txa)
+  #cost.matrix[2,] <- trace[[2]][2,c(1,3)] * c(st.mon.plac, st.mon.txa)
+  cost.matrix[2,] <- apply(trace.y1[2:13, c(1,3)], 2, mean) * c(st.mon.plac, st.mon.txa)
+  
   cost.matrix[3:(time.horizon+1),] <- trace[[2]][3:(time.horizon+1),c(1,3)] * c(lt.mon.plac, lt.mon.txa)
   
   cost.matrix.d <- cost.matrix * d
@@ -495,8 +489,13 @@ run.model <- function(clinical = clin.char, dis.plac = disability.placebo, dis.t
   
   utility.matrix <- matrix(0, time.horizon + 1, 2) # placebo / txa
   
-  utility.matrix[2,1] <- mean(trace[[1]][2:13,1]) * (util.values.plac - dec[2,2])
-  utility.matrix[2,2] <- mean(trace[[1]][2:13,3]) * (util.values.txa - dec[2,2])
+  # utility.matrix[2,1] <- mean(trace[[1]][2:13,1]) * (util.values.plac - dec[2,2])
+  # utility.matrix[2,2] <- mean(trace[[1]][2:13,3]) * (util.values.txa - dec[2,2])
+  
+  dec.year1 <- dec[findInterval(age + year1.cycle, dec[,1]),2]
+
+  utility.matrix[2,1] <- sum(trace[[1]][2:13,1] * (util.values.plac - dec.year1)/12)
+  utility.matrix[2,2] <- sum(trace[[1]][2:13,3] * (util.values.txa -  dec.year1)/12)
   
   utility.matrix[3:(time.horizon+1),1] <- trace[[2]][3:(time.horizon+1),1] * (util.values.plac - dec[3:(time.horizon+1),2]) 
   utility.matrix[3:(time.horizon+1),2] <- trace[[2]][3:(time.horizon+1),3] * (util.values.txa - dec[3:(time.horizon+1),2])
@@ -509,11 +508,6 @@ run.model <- function(clinical = clin.char, dis.plac = disability.placebo, dis.t
   ## ICER ## 
   
   icer <-   (cost.sum[2] - cost.sum[1]) / (utility.sum[2] - utility.sum[1])  
-  
-  # icer_alt <- if((cost.sum[2] - cost.sum[1]) <= 0 & (utility.sum[2] - utility.sum[1]) > 0) "Intervention dominates" else 
-  #   if((cost.sum[2] - cost.sum[1]) > 0 & (utility.sum[2] - utility.sum[1]) <= 0 ) "Control dominates" else
-  #     (cost.sum[2] - cost.sum[1]) / (utility.sum[2] - utility.sum[1])  
-  
   
   if(output.type==1) {
     return(list(c(cost.placebo = cost.sum[1], 
@@ -530,4 +524,4 @@ run.model <- function(clinical = clin.char, dis.plac = disability.placebo, dis.t
 
 ## Deterministic results 
 run.model(clin.char, dis.plac = disability.placebo, dis.txa = disability.txa, util.values = utility,
-          cost = costs, dec = utility.decrement, discount.c = disc.c, discount.o = disc.o)
+          cost = costs, dec = utility.decrement, d = discount.c, o = discount.o)
