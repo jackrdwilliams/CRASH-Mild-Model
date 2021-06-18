@@ -375,11 +375,6 @@ gen.costs <- function(){
   cost.severe.lt.sims <- rgamma(sims, shape = (12500^2 / 2500^2), scale = 2500^2 / 12500 ) * inflation[2]
   
   
-
-  
-  
-  
-  
   costs.sims <- data.frame(data.frame(cost.treatment.sims, hospital.cost.placebo.sims, hospital.cost.txa.sims),
                           cost.good.st.sims, cost.moderate.st.sims, cost.severe.st.sims,
                           cost.good.lt.sims, cost.moderate.lt.sims, cost.severe.lt.sims)
