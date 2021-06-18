@@ -23,8 +23,8 @@ sims <- 10000
 outer.loops <- 100
 inner.loops <- 100
 
-age <- 80
-male = 0.5 # plaecholder
+age <- 90
+male = 0.5 
 time.horizon = min(60, 100-ceiling(age))
 
 lambda <- seq(from = 0, to = 50000, by = 100)
@@ -37,7 +37,9 @@ gen.clinical.characteristics <- function(){
 
 # Mild ACM RR (CRASH-3)
 treatment.effect <- 0.6972504
-treatment.effect.sims <- exp(rnorm(sims, log(treatment.effect), 0.2216285))
+treatment.effect.log.se <- (log(1.076571) - log(0.45158))/(2*1.96)
+
+treatment.effect.sims <- exp(rnorm(sims, log(treatment.effect), treatment.effect.log.se))
 
 hi.risk <- 0.015783
 hi.risk.sims <- rbeta(sims, 100, 6236)
@@ -113,6 +115,89 @@ disability.placebo.sims <- gen.clinical.characteristics()[[5]]
 ## Assuming disability for TXA is equal to placebo
 # disability.txa.sims <- gen.clinical.characteristics()[[6]]
 disability.txa.sims <- disability.placebo.sims
+
+
+# Adverse events 
+
+gen.ae <- function(){
+  
+  # Risks from mild patients
+  
+  pe <- c(5, 1247)
+  dvt <- c(1, 1251)
+  stroke <- c(2, 1250)
+  mi <- c(4, 1248)
+  renal <- c(7, 1246)
+  sepsis <- c(30, 1222)
+  seizure <- c(15, 1237)
+  gi <- c(6, 1246)
+  
+  ae <- data.frame(pe, dvt, stroke, mi, renal, sepsis, seizure, gi)
+  
+  # These RR are from all patients 
+
+  pe.rr <-    c(0.9776573, 0.5093468, 1.876548)
+  dvt.rr <-  c(1.222337, 0.572802, 2.608418)
+  stroke.rr <- c(1.232966, 0.7144184, 2.127891)
+  mi.rr <-    c(0.733402, 0.3093295, 1.738853)
+  renal.rr <- c(1.275005, 0.9023189, 1.801623)
+  sepsis.rr <- c(1.037228, 0.8853653, 1.215139)
+  seizure.rr <- c(1.210695, 0.93925, 1.560589)
+  gi.rr <-    c(0.7111777, 0.3740009, 1.352333)
+
+  ae.rr <- data.frame(pe.rr, dvt.rr, stroke.rr, mi.rr, 
+                      renal.rr, sepsis.rr, seizure.rr, gi.rr)  
+  
+
+  
+  # Deterministic risks 
+  
+  placebo.risk <- ae[1,] / (ae[1,] + ae[2,])
+  
+
+  txa.risk  <- placebo.risk * as.numeric(ae.rr[1,])
+  
+  ae.risk <- data.frame(placebo.risk, txa.risk)
+  
+  # Simulations
+
+  
+  
+  placebo.risk.sims <- matrix(NA, nrow = sims, ncol = length(placebo.risk))
+  
+  for(i in 1:length(placebo.risk)){
+    placebo.risk.sims[,i] <- rbeta(sims, ae[1,i], ae[2,i]) 
+  }
+  
+  
+  log.rr <- as.numeric(log(ae.rr[1,]))
+  log.se <- as.numeric((log(ae.rr[3,]) - log(ae.rr[2,]))/(2*1.96))
+  
+  rr.sims <- matrix(NA, nrow = sims, ncol = length(placebo.risk))
+  
+  for(i in 1:length(placebo.risk)){
+    rr.sims[,i] <- exp(rnorm(sims, mean = log.rr[i] , sd = log.se[i])) 
+  }
+  
+  
+  txa.risk.sims <- placebo.risk.sims * rr.sims
+  
+  colnames(placebo.risk.sims) <- colnames(ae)
+  colnames(txa.risk.sims) <- colnames(ae)
+
+  return(list(placebo.risk, 
+              txa.risk,
+              placebo.risk.sims,
+              txa.risk.sims))
+  
+}  
+
+ae.placebo <- gen.ae()[[1]]
+ae.txa <- gen.ae()[[2]]
+
+ae.placebo.sims <- gen.ae()[[3]]
+ae.txa.sims <- gen.ae()[[4]]
+
 
 
 ## Generate long-term risk of death
@@ -214,8 +299,6 @@ utility.decrement <- gen.utility.dec()
 
 # Treatment costs 
 
-## need to add tx effect costs
-
 gen.costs <- function(){
 
   cost.txa.dose <- 1.5
@@ -251,15 +334,21 @@ gen.costs <- function(){
   cost.moderate.lt <- 1783.59457945
   cost.severe.lt <- 13934.33265195
 
-
-
-  # monitoring.costs.st <- sum(c(rep(cost.good.st,2), cost.moderate.st, rep(cost.severe.st, 2)) * dis.plac) / sum(dis.plac)
-  # monitoring.costs.st <- sum(c(rep(cost.good.st,2), cost.moderate.st, rep(cost.severe.st, 2)) * dis.txa) / sum(dis.txa)
-  # 
-  # monitoring.costs.lt <- sum(c(rep(cost.good.lt,2), cost.moderate.lt, rep(cost.severe.lt, 2)) * dis.plac) / sum(dis.plac)
-  # monitoring.costs.lt <- sum(c(rep(cost.good.lt,2), cost.moderate.lt, rep(cost.severe.lt, 2)) * dis.txa) / sum(dis.txa)
-
-
+  # Adverse events # 
+  
+  pe <- 0
+  dvt <- 0
+  stroke <- 0
+  mi <- 0
+  renal <- 0
+  sepsis <- 0
+  seizure <- 0
+  gi <- 0
+  
+  
+  
+  
+  
   cost.names <- c("treatment", "hospital.placebo", "hospital.txa", "st.good", "st.mod", "st.sev", "lt.good", "lt.mod", "lt.sev")
   costs <- c(cost.treatment, hospital.cost.placebo, hospital.cost.txa, cost.good.st, cost.moderate.st, cost.severe.st,
              cost.good.lt, cost.moderate.lt, cost.severe.lt)
@@ -267,6 +356,8 @@ gen.costs <- function(){
   names(costs) <- cost.names
   
 
+  
+  
   # Simulations - to be input later on (PLACEHOLDER)
   
   prob.neuro.sims <- rbeta(sims, 23.83398, 	667.00607)
@@ -287,20 +378,11 @@ gen.costs <- function(){
   cost.moderate.lt.sims <- rgamma(sims, shape = (1600^2 / 320^2), scale = 320^2 / 1600 ) * inf0607
   cost.severe.lt.sims <- rgamma(sims, shape = (12500^2 / 2500^2), scale = 2500^2 / 12500 ) * inf0607
   
-#  df.st <- data.frame(cost.good.st.sims, cost.good.st.sims, cost.moderate.st.sims, cost.severe.st.sims, cost.severe.st.sims) 
-#  df.lt <- data.frame(cost.good.lt.sims, cost.good.lt.sims, cost.moderate.lt.sims, cost.severe.lt.sims, cost.severe.lt.sims)
   
-  ## has out below as this needs to be done in the model...... 
-  # 
-  # monitoring.costs.st <- df.st * dis.plac.sims # These are currently the same but structured in case these need to differ
-  # monitoring.costs.st <- df.st * dis.txa.sims  # These are currently the same but structured in case these need to differ
-  # 
-  # m.costs.st <- apply(monitoring.costs.st, 1, sum)
-  # 
-  # monitoring.costs.lt <- df.lt * dis.plac.sims  # These are currently the same but structured in case these need to differ
-  # monitoring.costs.lt <- df.lt * dis.txa.sims  # These are currently the same but structured in case these need to differ
-  # 
-  # m.costs.lt <- apply(monitoring.costs.lt, 1, sum)
+
+  
+  
+  
   
   costs.sims <- data.frame(data.frame(cost.treatment.sims, hospital.cost.placebo.sims, hospital.cost.txa.sims),
                           cost.good.st.sims, cost.moderate.st.sims, cost.severe.st.sims,
