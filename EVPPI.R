@@ -130,7 +130,8 @@ for(a in 1:outer.loops){
   clin.sim[1:3] <- unlist(clin.char.sims[a,1:3]) # HI risk and tx effect
   dis.placebo.sim <- unlist(disability.placebo.sims[a,])
   dis.txa.sim <- unlist(disability.txa.sims[a,])
-
+    ae.p.sim <- unlist(ae.placebo.sims[a,])
+    ae.t.sim <- unlist(ae.txa.sims[a,])
 
   for(b in 1:inner.loops){
 
@@ -139,7 +140,8 @@ for(a in 1:outer.loops){
     utility.sim <- unlist(utility.sims[b,]) ## Utility values
     cost.sim[4:9] <- unlist(costs.sims[b,4:9])
 
-    inner.results[b,] <- run.model(clin.sim, dis.placebo.sim, dis.txa.sim, utility.sim, cost.sim)[[1]]
+    
+    inner.results[b,] <- run.model(clin.sim, dis.placebo.sim, dis.txa.sim, utility.sim, cost.sim, ae.p = ae.p.sim, ae.t = ae.t.sim)[[1]]
   }
 
   #after each inner loop PSA, calculate the mean NMB for each tx and store the results
@@ -172,7 +174,7 @@ subset(evppi.trial.long.pop, lambda==20000)
 
 #### EVPPI for individual loops - 'Double Monte Carlo loop method' 
 
-pb = txtProgressBar(min = 0, max = outer.loops*5, initial = 0, style = 3)
+pb = txtProgressBar(min = 0, max = outer.loops*6, initial = 0, style = 3)
 
 ## EVPPI loops - TXA treatment effect
 for(a in 1:outer.loops){
@@ -189,8 +191,10 @@ for(a in 1:outer.loops){
     dis.txa.sim <- unlist(disability.txa.sims[b,])
     utility.sim <- unlist(utility.sims[b,])
     cost.sim <- unlist(costs.sims[b,])
+    ae.p.sim <- unlist(ae.placebo.sims[b,])
+    ae.t.sim <- unlist(ae.txa.sims[b,])
     
-    inner.results[b,] <- run.model(clin.sim, dis.placebo.sim, dis.txa.sim, utility.sim, cost.sim)[[1]] 
+    inner.results[b,] <- run.model(clin.sim, dis.placebo.sim, dis.txa.sim, utility.sim, cost.sim, ae.p = ae.p.sim, ae.t = ae.t.sim)[[1]] 
   }
   
   #after each inner loop PSA, calculate the mean NMB for each tx and store the results
@@ -217,8 +221,10 @@ for(a in 1:outer.loops){
     dis.txa.sim <- unlist(disability.txa.sims[b,])
     utility.sim <- unlist(utility.sims[b,])
     cost.sim <- unlist(costs.sims[b,])
+    ae.p.sim <- unlist(ae.placebo.sims[b,])
+    ae.t.sim <- unlist(ae.txa.sims[b,])
     
-    inner.results[b,] <- run.model(clin.sim, dis.placebo.sim, dis.txa.sim, utility.sim, cost.sim)[[1]] 
+    inner.results[b,] <- run.model(clin.sim, dis.placebo.sim, dis.txa.sim, utility.sim, cost.sim, ae.p = ae.p.sim, ae.t = ae.t.sim)[[1]] 
   }
   
   #after each inner loop PSA, calculate the mean NMB for each tx and store the results
@@ -245,8 +251,10 @@ for(a in 1:outer.loops){
     dis.txa.sim <- unlist(disability.txa.sims[b,])
     utility.sim <- unlist(utility.sims[b,])
     cost.sim <- unlist(costs.sims[b,])
+    ae.p.sim <- unlist(ae.placebo.sims[b,])
+    ae.t.sim <- unlist(ae.txa.sims[b,])
     
-    inner.results[b,] <- run.model(clin.sim, dis.placebo.sim, dis.txa.sim, utility.sim, cost.sim)[[1]] 
+    inner.results[b,] <- run.model(clin.sim, dis.placebo.sim, dis.txa.sim, utility.sim, cost.sim, ae.p = ae.p.sim, ae.t = ae.t.sim)[[1]] 
   }
   
   #after each inner loop PSA, calculate the mean NMB for each tx and store the results
@@ -275,8 +283,10 @@ for(a in 1:outer.loops){
     # dis.txa.sim <- unlist(disability.txa.sims[b,])
     utility.sim <- unlist(utility.sims[b,])
     cost.sim <- unlist(costs.sims[b,])
+    ae.p.sim <- unlist(ae.placebo.sims[b,])
+    ae.t.sim <- unlist(ae.txa.sims[b,])
     
-    inner.results[b,] <- run.model(clin.sim, dis.placebo.sim, dis.txa.sim, utility.sim, cost.sim)[[1]] 
+    inner.results[b,] <- run.model(clin.sim, dis.placebo.sim, dis.txa.sim, utility.sim, cost.sim, ae.p = ae.p.sim, ae.t = ae.t.sim)[[1]] 
   }
   
   #after each inner loop PSA, calculate the mean NMB for each tx and store the results
@@ -303,8 +313,10 @@ for(a in 1:outer.loops){
     dis.txa.sim <- unlist(disability.txa.sims[b,])
     #utility.sim <- unlist(utility.sims[b,])
     cost.sim <- unlist(costs.sims[b,])
+    ae.p.sim <- unlist(ae.placebo.sims[b,])
+    ae.t.sim <- unlist(ae.txa.sims[b,])
     
-    inner.results[b,] <- run.model(clin.sim, dis.placebo.sim, dis.txa.sim, utility.sim, cost.sim)[[1]] 
+    inner.results[b,] <- run.model(clin.sim, dis.placebo.sim, dis.txa.sim, utility.sim, cost.sim, ae.p = ae.p.sim, ae.t = ae.t.sim)[[1]] 
   }
   
   #after each inner loop PSA, calculate the mean NMB for each tx and store the results
@@ -331,8 +343,10 @@ for(a in 1:outer.loops){
     dis.txa.sim <- unlist(disability.txa.sims[b,])
     utility.sim <- unlist(utility.sims[b,])
     #cost.sim <- unlist(costs.sims[b,])
+    ae.p.sim <- unlist(ae.placebo.sims[b,])
+    ae.t.sim <- unlist(ae.txa.sims[b,])
     
-    inner.results[b,] <- run.model(clin.sim, dis.placebo.sim, dis.txa.sim, utility.sim, cost.sim)[[1]] 
+    inner.results[b,] <- run.model(clin.sim, dis.placebo.sim, dis.txa.sim, utility.sim, cost.sim, ae.p = ae.p.sim, ae.t = ae.t.sim)[[1]] 
   }
   
   #after each inner loop PSA, calculate the mean NMB for each tx and store the results
@@ -344,6 +358,39 @@ for(a in 1:outer.loops){
 evppi.costs <- gen.evppi.results(evppi.results.placebo, evppi.results.txa, lambda)
 
 
+
+## EVPPI loops - Costs  
+for(a in 1:outer.loops){
+  
+  ## 1. Select the 'partial' parameter from the outer loop 
+  ae.p.sim <- unlist(ae.placebo.sims[b,])
+  ae.t.sim <- unlist(ae.txa.sims[b,])
+  
+  for(b in 1:inner.loops){
+    
+    # Select traditional parameters, minus the outer loop parameter
+    
+    clin.sim <- unlist(clin.char.sims[b,])
+    dis.placebo.sim <- unlist(disability.placebo.sims[b,])
+    dis.txa.sim <- unlist(disability.txa.sims[b,])
+    utility.sim <- unlist(utility.sims[b,])
+    cost.sim <- unlist(costs.sims[b,])
+    
+    inner.results[b,] <- run.model(clin.sim, dis.placebo.sim, dis.txa.sim, utility.sim, cost.sim, ae.p = ae.p.sim, ae.t = ae.t.sim)[[1]] 
+  }
+  
+  #after each inner loop PSA, calculate the mean NMB for each tx and store the results
+  nmb <- gen.nmb(inner.results)
+  evppi.results.placebo[a,] <- nmb[[1]]
+  evppi.results.txa[a,] <- nmb[[2]]
+  setTxtProgressBar(pb,outer.loops*4 + a)
+}
+evppi.ae <- gen.evppi.results(evppi.results.placebo, evppi.results.txa, lambda)
+
+
+
+
+
 ## Reshaping and plotting ## 
 
 evppi.wide <- data.frame(evpi,
@@ -352,10 +399,11 @@ evppi.wide <- data.frame(evpi,
                          evppi.smr[,2],
                          evppi.disability[,2],
                          evppi.utility[,2],
-                         evppi.costs[,2])
-colnames(evppi.wide) <- c('lambda', 'EVPI', 'Treatment effect',"Mortality risk", 'SMR', 'Outcomes post-TBI', 'Utility values', 'Costs')
+                         evppi.costs[,2], 
+                         evppi.ae[,2])
+colnames(evppi.wide) <- c('lambda', 'EVPI', 'Treatment effect',"Mortality risk", 'SMR', 'Outcomes post-TBI', 'Utility values', 'Costs', "Adverse events")
 
-evppi.long <- evppi.wide %>% gather(Parameters, VoI, 2:8)
+evppi.long <- evppi.wide %>% gather(Parameters, VoI, 2:9)
 evppi.long.pop <- evppi.long
 evppi.long.pop$VoI <- evppi.long$VoI * effective.population
 
