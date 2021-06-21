@@ -310,7 +310,7 @@ utility.decrement <- gen.utility.dec()
 gen.costs <- function(){
 
   inflation <- 314.915918 / c(301.150189, 282.5, 249.8)
-  names(inflation) <- c("2007", "2012", "2018")
+  names(inflation) <- c("2018", "2012", "2007")
   
   cost.txa.dose <- 1.5
   cost.sodium <- 0 # 55p for 100ml, 270 for 500ml 
@@ -353,16 +353,15 @@ gen.costs <- function(){
   
   ## Adverse events
   
-  cost.pe <- 500
-  cost.dvt <- 500
-  cost.stroke <- 500
-  cost.mi <- 500
-  cost.renal <- 500
-  cost.sepsis <- 500
-  cost.seizure <- 500
-  cost.gi <- 500
-  
-  
+  cost.pe <- 472.46526239 * inflation[1]
+  cost.dvt <- 88.36794877 * inflation[1]
+  cost.stroke <- 699.99139241 * inflation[1]
+  cost.mi <- 1239.63378882 * inflation[1]
+  cost.renal <- 444.09597767 * inflation[1]
+  cost.sepsis <- 369.76900966 * inflation[1]
+  cost.seizure <- 531.76481678 * inflation[1]
+  cost.gi <- 347.38271318 * inflation[1]
+
 
   cost.names <- c("treatment", "hospital.placebo", "hospital.txa", "st.good", "st.mod", "st.sev", "lt.good", "lt.mod", "lt.sev", 
                   "pe.cost", "dvt.cost", "stroke.cost", "mi.cost", "renal.cost", "sepsis.cost", "seizure.cost", "gi.cost")
