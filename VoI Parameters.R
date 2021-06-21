@@ -6,6 +6,7 @@ colnames(ons.pop) <- c("age", "male", "female")
 
 # Settings and inputs for analysis
 age.range <- c(70:90)
+age.range.alt <- c(60:90)
 discount <- 0.035
 voi.th <- 20
 prop.mild <- 0.9 
@@ -29,4 +30,10 @@ total <- population * incidence * prop.mild
 ## Multiply UK age-adjusted incidence by population 
 effective.population <- sum( total * (1/(1+discount)^(0:(voi.th-1))))
 effective.population
+
+# 60 + population ('alt')
+
+population.alt <- sum(subset(ons.pop, age >= age.range.alt[1])) 
+total.alt <- population.alt * incidence * prop.mild
+effective.population.alt <- sum( total.alt * (1/(1+discount)^(0:(voi.th-1))))
 
