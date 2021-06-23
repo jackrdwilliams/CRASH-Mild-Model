@@ -11,7 +11,7 @@ library(dplyr)
 library(ggplot2)
 library(MCMCpack)
 
-save.results = FALSE
+save.results = TRUE
 
 # as.integer(Sys.time())
 set.seed(29716)
@@ -314,12 +314,11 @@ gen.costs <- function(){
   
   cost.txa.dose <- 1.5
   cost.sodium <- 0 # 55p for 100ml, 270 for 500ml 
-  cost.needle <- (570/111) + 0.12 # 12p needle syringe, £570 per year pre-drawn 
+  cost.needle <- (570/37) + 0.12 # 12p needle syringe, £570 per year pre-drawn 
   cost.nurse <- 0
 
   cost.treatment <- sum(cost.txa.dose, cost.sodium, cost.needle, cost.nurse)
   
-
   # Hospital costs
 
   los.placebo <-  4
@@ -371,7 +370,7 @@ gen.costs <- function(){
   
   names(costs) <- cost.names
   
-  cost.needle.sims <- ((570/111) * runif(sims, 0.5, 1.5)) + 0.12
+  cost.needle.sims <- ((570/37) * runif(sims, 0.5, 1.5)) + 0.12
   
   prob.neuro.sims <- rbeta(sims, 23.83398, 	667.00607)
 
