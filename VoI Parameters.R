@@ -12,42 +12,39 @@ discount <- 0.035
 voi.th <- 20
 prop.mild <- 0.9 
 
-## Linear approximation and incidence tables (Global burden of disease)
-
-# data.m <- read.csv("inputs/age_standardised_incidence_male.csv")
-# data.f <- read.csv("inputs/age_standardised_incidence_female.csv")
-# 
-# incidence.ratio <- 260/369
-# est.male   <-  approx(data.m$Age, data.m$Male/100000, xout=c(age.range), method="linear")
-# est.female <-  approx(data.f$Age, data.f$Female/100000, xout=c(age.range), method="linear")
-# incidence <- data.frame(age = est.male[[1]], male = est.male[[2]], female = est.female[[2]]) * incidence.ratio 
-
-## Alternative incidence - Tennent 2005
+## Alternative incidence - Tennent 2005 (75 and over)
 incidence <- 410.8/100000
 
+
 # Population (fixed per year)
-population <- sum(subset(ons.pop, age >= age.range[1])) 
+# population <- sum(subset(ons.pop, age >= age.range[1])) 
 
 # Population projection (ONS 2018 projections)
 # Estimate from ONS projections
 rownames(ons.pop.proj) <- ons.pop.proj[,1]
 ons.pop.proj[,1] <- seq(0, 100, 5)
-pop <- ons.pop.proj[,-c(2,3,4,5)] ## Removing 2018 to 2021
-pop.sums <- apply(subset(pop, Ages>=70), 2, sum) 
-population.vec <- as.numeric(pop.sums[2:(voi.th+1)] * 1000) # adjusting for per 1000 data
+pop <- ons.pop.proj[,c(1, 6:(5+voi.th))] ## Removing 2018 to 2021, and years beyond TH
+pop.matrix <- subset(pop, Ages>=70) 
+pop.matrix.inc <- pop.matrix[,-1] * 1000 * incidence # adjusting for per 1000 data and incidence 
+
+population.vec <- colSums(pop.matrix.inc)
 
 
 ## Multiply UK age-adjusted incidence by population 
-total <- population.vec * incidence * prop.mild
+total <- as.numeric(population.vec) * prop.mild 
 
-effective.population <- sum( total * (1/(1+discount)^(0:(voi.th-1))))
+effective.population <- sum(total * (1/(1+discount)^(0:(voi.th-1))))
 effective.population
 
-# 60 + population ('alt')
 
-population.alt <- sum(subset(ons.pop, age >= age.range.alt[1])) 
-total.alt <- population.alt * incidence * prop.mild
-effective.population.alt <- sum( total.alt * (1/(1+discount)^(0:(voi.th-1))))
+# 60 + population ('alt')
+incidence.alt <- incidence * 0.5
+pop.matrix.alt <- subset(pop, Ages>=60 & Ages<70)
+pop.matrix.inc.alt <- pop.matrix.alt[,-1] * 1000 * incidence.alt # adjusting for per 1000 data and incidence 
+population.vec.alt <- colSums(pop.matrix.inc.alt)
+
+total.alt <- as.numeric(population.vec.alt) * prop.mild  
+effective.population.alt <- effective.population + sum( total.alt * (1/(1+discount)^(0:(voi.th-1))))
 
 
 
