@@ -11,6 +11,8 @@ library(dplyr)
 library(ggplot2)
 library(MCMCpack)
 
+save.results = TRUE
+
 # as.integer(Sys.time())
 set.seed(29716)
 
@@ -24,7 +26,7 @@ outer.loops <- 100
 inner.loops <- 100
 
 age <- 80
-male = 0.5 # plaecholder
+male = 0.5 
 time.horizon = min(60, 100-ceiling(age))
 
 lambda <- seq(from = 0, to = 50000, by = 100)
@@ -43,7 +45,9 @@ gen.clinical.characteristics <- function(){
 
 # Mild ACM RR (CRASH-3)
 treatment.effect <- 0.6972504
-treatment.effect.sims <- exp(rnorm(sims, log(treatment.effect), 0.2216285))
+treatment.effect.log.se <- (log(1.076571) - log(0.45158))/(2*1.96)
+
+treatment.effect.sims <- exp(rnorm(sims, log(treatment.effect), treatment.effect.log.se))
 
 hi.risk <- 100 / 6336
 hi.risk.sims <- rbeta(sims, 100, 6236)
@@ -119,6 +123,89 @@ disability.placebo.sims <- gen.clinical.characteristics()[[5]]
 ## Assuming disability for TXA is equal to placebo
 # disability.txa.sims <- gen.clinical.characteristics()[[6]]
 disability.txa.sims <- disability.placebo.sims
+
+
+# Adverse events 
+
+gen.ae <- function(){
+  
+  # Risks from mild patients
+  
+  pe <- c(5, 1247)
+  dvt <- c(1, 1251)
+  stroke <- c(2, 1250)
+  mi <- c(4, 1248)
+  renal <- c(7, 1246)
+  sepsis <- c(30, 1222)
+  seizure <- c(15, 1237)
+  gi <- c(6, 1246)
+  
+  ae <- data.frame(pe, dvt, stroke, mi, renal, sepsis, seizure, gi)
+  
+  # These RR are from all patients 
+
+  pe.rr <-    c(0.9776573, 0.5093468, 1.876548)
+  dvt.rr <-  c(1.222337, 0.572802, 2.608418)
+  stroke.rr <- c(1.232966, 0.7144184, 2.127891)
+  mi.rr <-    c(0.733402, 0.3093295, 1.738853)
+  renal.rr <- c(1.275005, 0.9023189, 1.801623)
+  sepsis.rr <- c(1.037228, 0.8853653, 1.215139)
+  seizure.rr <- c(1.210695, 0.93925, 1.560589)
+  gi.rr <-    c(0.7111777, 0.3740009, 1.352333)
+
+  ae.rr <- data.frame(pe.rr, dvt.rr, stroke.rr, mi.rr, 
+                      renal.rr, sepsis.rr, seizure.rr, gi.rr)  
+  
+
+  
+  # Deterministic risks 
+  
+  placebo.risk <- ae[1,] / (ae[1,] + ae[2,])
+  
+
+  txa.risk  <- placebo.risk * as.numeric(ae.rr[1,])
+  
+  ae.risk <- data.frame(placebo.risk, txa.risk)
+  
+  # Simulations
+
+  
+  
+  placebo.risk.sims <- matrix(NA, nrow = sims, ncol = length(placebo.risk))
+  
+  for(i in 1:length(placebo.risk)){
+    placebo.risk.sims[,i] <- rbeta(sims, ae[1,i], ae[2,i]) 
+  }
+  
+  
+  log.rr <- as.numeric(log(ae.rr[1,]))
+  log.se <- as.numeric((log(ae.rr[3,]) - log(ae.rr[2,]))/(2*1.96))
+  
+  rr.sims <- matrix(NA, nrow = sims, ncol = length(placebo.risk))
+  
+  for(i in 1:length(placebo.risk)){
+    rr.sims[,i] <- exp(rnorm(sims, mean = log.rr[i] , sd = log.se[i])) 
+  }
+  
+  
+  txa.risk.sims <- placebo.risk.sims * rr.sims
+  
+  colnames(placebo.risk.sims) <- colnames(ae)
+  colnames(txa.risk.sims) <- colnames(ae)
+
+  return(list(placebo.risk, 
+              txa.risk,
+              placebo.risk.sims,
+              txa.risk.sims))
+  
+}  
+
+ae.placebo <- gen.ae()[[1]]
+ae.txa <- gen.ae()[[2]]
+
+ae.placebo.sims <- gen.ae()[[3]]
+ae.txa.sims <- gen.ae()[[4]]
+
 
 
 ## Generate long-term risk of death
@@ -223,16 +310,15 @@ utility.decrement <- gen.utility.dec()
 gen.costs <- function(){
 
   inflation <- 314.915918 / c(301.150189, 282.5, 249.8)
-  names(inflation) <- c("2007", "2012", "2018")
+  names(inflation) <- c("2018", "2012", "2007")
   
   cost.txa.dose <- 1.5
   cost.sodium <- 0 # 55p for 100ml, 270 for 500ml 
-  cost.needle <- (570/111) + 0.12 # 12p needle syringe, £570 per year pre-drawn 
-  cost.nurse <- 0
+  cost.needle <- 0.12 # 12p needle syringe, £570 per year pre-drawn 
+  cost.nurse <- 48 * (5 / 60) # 5 mins to draw TXA
 
   cost.treatment <- sum(cost.txa.dose, cost.sodium, cost.needle, cost.nurse)
   
-
   # Hospital costs
 
   los.placebo <-  4
@@ -253,7 +339,6 @@ gen.costs <- function(){
   cost.moderate.st <- 17160  * inflation[3]
   cost.severe.st <- 33900 * inflation[3]
 
-
   cost.good.lt <- 24  * inflation[2]
   cost.moderate.lt <- 1600 * inflation[2]
   cost.severe.lt <- 12500 * inflation[2]
@@ -264,22 +349,32 @@ gen.costs <- function(){
   # 
   # monitoring.costs.lt <- sum(c(rep(cost.good.lt,2), cost.moderate.lt, rep(cost.severe.lt, 2)) * dis.plac) / sum(dis.plac)
   # monitoring.costs.lt <- sum(c(rep(cost.good.lt,2), cost.moderate.lt, rep(cost.severe.lt, 2)) * dis.txa) / sum(dis.txa)
+  
+  ## Adverse events
+  
+  cost.pe <- 472.46526239 * inflation[1]
+  cost.dvt <- 88.36794877 * inflation[1]
+  cost.stroke <- 699.99139241 * inflation[1]
+  cost.mi <- 1239.63378882 * inflation[1]
+  cost.renal <- 444.09597767 * inflation[1]
+  cost.sepsis <- 369.76900966 * inflation[1]
+  cost.seizure <- 531.76481678 * inflation[1]
+  cost.gi <- 347.38271318 * inflation[1]
 
 
-  cost.names <- c("treatment", "hospital.placebo", "hospital.txa", "st.good", "st.mod", "st.sev", "lt.good", "lt.mod", "lt.sev")
+  cost.names <- c("treatment", "hospital.placebo", "hospital.txa", "st.good", "st.mod", "st.sev", "lt.good", "lt.mod", "lt.sev", 
+                  "pe.cost", "dvt.cost", "stroke.cost", "mi.cost", "renal.cost", "sepsis.cost", "seizure.cost", "gi.cost")
   costs <- c(cost.treatment, hospital.cost.placebo, hospital.cost.txa, cost.good.st, cost.moderate.st, cost.severe.st,
-             cost.good.lt, cost.moderate.lt, cost.severe.lt)
+             cost.good.lt, cost.moderate.lt, cost.severe.lt, 
+             cost.pe, cost.dvt, cost.stroke, cost.mi, cost.renal, cost.sepsis, cost.seizure, cost.gi)
   
   names(costs) <- cost.names
   
-
-  # Simulations 
-  
-  cost.needle.sims <- ((570/111) * runif(sims, 0.5, 1.5)) + 0.12
+  cost.nurse.sims <- 48 * (runif(sims, 2, 8) / 60) 
   
   prob.neuro.sims <- rbeta(sims, 23.83398, 	667.00607)
 
-  cost.treatment.sims <- rep(sum(cost.txa.dose, cost.sodium, cost.nurse),sims) + cost.needle.sims
+  cost.treatment.sims <- rep(sum(cost.txa.dose, cost.sodium, cost.needle),sims) + cost.nurse.sims
   hospital.cost.placebo.sims <- rep(hospital.cost.placebo, sims) * 1 + rep(neurosurgery.cost, sims) * prob.neuro.sims  ## PLACEHOLDER
   hospital.cost.txa.sims <- rep(hospital.cost.txa, sims) * 1 + rep(neurosurgery.cost, sims) * prob.neuro.sims ## PLACEHOLDER
   
@@ -293,24 +388,21 @@ gen.costs <- function(){
   cost.moderate.lt.sims <- rgamma(sims, shape = (1600^2 / 320^2), scale = 320^2 / 1600 ) * inflation[2]
   cost.severe.lt.sims <- rgamma(sims, shape = (12500^2 / 2500^2), scale = 2500^2 / 12500 ) * inflation[2]
   
-#  df.st <- data.frame(cost.good.st.sims, cost.good.st.sims, cost.moderate.st.sims, cost.severe.st.sims, cost.severe.st.sims) 
-#  df.lt <- data.frame(cost.good.lt.sims, cost.good.lt.sims, cost.moderate.lt.sims, cost.severe.lt.sims, cost.severe.lt.sims)
+  # Adverse event costs 
   
-  ## has out below as this needs to be done in the model...... 
-  # 
-  # monitoring.costs.st <- df.st * dis.plac.sims # These are currently the same but structured in case these need to differ
-  # monitoring.costs.st <- df.st * dis.txa.sims  # These are currently the same but structured in case these need to differ
-  # 
-  # m.costs.st <- apply(monitoring.costs.st, 1, sum)
-  # 
-  # monitoring.costs.lt <- df.lt * dis.plac.sims  # These are currently the same but structured in case these need to differ
-  # monitoring.costs.lt <- df.lt * dis.txa.sims  # These are currently the same but structured in case these need to differ
-  # 
-  # m.costs.lt <- apply(monitoring.costs.lt, 1, sum)
+  pe.sims <- rep(cost.pe, sims) # cost.pe * runif(sims, 0.5, 1.5)
+  dvt.sims <- rep(cost.dvt , sims)  # cost.dvt * runif(sims, 0.5, 1.5)
+  stroke.sims <- rep(cost.stroke , sims)  # cost.stroke * runif(sims, 0.5, 1.5)
+  mi.sims <- rep(cost.mi , sims)  # cost.mi * runif(sims, 0.5, 1.5)
+  renal.sims <- rep(cost.renal , sims)  # cost.renal * runif(sims, 0.5, 1.5)
+  sepsis.sims <- rep(cost.sepsis, sims)  # cost.sepsis * runif(sims, 0.5, 1.5)
+  seizure.sims <- rep(cost.seizure , sims)  # cost.seizure * runif(sims, 0.5, 1.5)
+  gi.sims <- rep(cost.gi , sims)  # cost.gi * runif(sims, 0.5, 1.5)
   
-  costs.sims <- data.frame(data.frame(cost.treatment.sims, hospital.cost.placebo.sims, hospital.cost.txa.sims),
+  costs.sims <- data.frame(cost.treatment.sims, hospital.cost.placebo.sims, hospital.cost.txa.sims,
                           cost.good.st.sims, cost.moderate.st.sims, cost.severe.st.sims,
-                          cost.good.lt.sims, cost.moderate.lt.sims, cost.severe.lt.sims)
+                          cost.good.lt.sims, cost.moderate.lt.sims, cost.severe.lt.sims, 
+                          pe.sims, dvt.sims, stroke.sims, mi.sims, renal.sims, sepsis.sims, seizure.sims, gi.sims)
   
   dim(costs.sims)
   colnames(costs.sims) <- cost.names
@@ -329,7 +421,7 @@ costs.sims <- gen.costs()[[2]]
 ##  TRACE CALCULATIONS AND OUTCOMES  ## 
 
 run.model <- function(clinical = clin.char, dis.plac = disability.placebo, dis.txa = disability.txa, util.values = utility, cost = costs, 
-                      dec = utility.decrement, d = discount.c, o = discount.o, output.type = 1) {
+                      dec = utility.decrement, ae.p = ae.placebo, ae.t = ae.txa, d = discount.c, o = discount.o, output.type = 1) {
   
 
   for(i in 1:length(clinical)) assign(names(clinical[i]),clinical[i])
@@ -392,9 +484,15 @@ run.model <- function(clinical = clin.char, dis.plac = disability.placebo, dis.t
   st.mon.txa <- sum( st.mon.costs * c(dis.txa[1] + dis.txa[2], dis.txa[3], dis.txa[4] + dis.txa[5]))
   lt.mon.txa <- sum( lt.mon.costs * c(dis.txa[1] + dis.txa[2], dis.txa[3], dis.txa[4] + dis.txa[5]))
   
+  # AE costs 
+  
+  cost.ae.p <- ae.p * cost[10:17]
+  cost.ae.t <- ae.t * cost[10:17]
+  cost.ae <- c(sum(cost.ae.p), sum(cost.ae.t))
+  
   cost.matrix <- matrix(0, time.horizon + 1, 2) # placebo / txa
   
-  cost.matrix[1,] <- cost[2:3] + (cost[1] * c(0,1)) 
+  cost.matrix[1,] <- cost[2:3] + cost.ae + (cost[1] * c(0,1)) 
   #cost.matrix[2,] <- trace[[2]][2,c(1,3)] * c(st.mon.plac, st.mon.txa)
   cost.matrix[2,] <- apply(trace.y1[2:13, c(1,3)], 2, mean) * c(st.mon.plac, st.mon.txa)
   
@@ -452,4 +550,4 @@ run.model <- function(clinical = clin.char, dis.plac = disability.placebo, dis.t
 
 ## Deterministic results 
 run.model(clin.char, dis.plac = disability.placebo, dis.txa = disability.txa, util.values = utility,
-          cost = costs, dec = utility.decrement, d = discount.c, o = discount.o)
+          cost = costs, dec = utility.decrement, ae.p = ae.placebo, ae.t = ae.txa, d = discount.c, o = discount.o)
