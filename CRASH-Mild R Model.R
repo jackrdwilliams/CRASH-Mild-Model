@@ -314,8 +314,8 @@ gen.costs <- function(){
   
   cost.txa.dose <- 1.5
   cost.sodium <- 0 # 55p for 100ml, 270 for 500ml 
-  cost.needle <- (570/37) + 0.12 # 12p needle syringe, £570 per year pre-drawn 
-  cost.nurse <- 0
+  cost.needle <- 0.12 # 12p needle syringe, £570 per year pre-drawn 
+  cost.nurse <- 48 * (5 / 60) # 5 mins to draw TXA
 
   cost.treatment <- sum(cost.txa.dose, cost.sodium, cost.needle, cost.nurse)
   
@@ -370,11 +370,11 @@ gen.costs <- function(){
   
   names(costs) <- cost.names
   
-  cost.needle.sims <- ((570/37) * runif(sims, 0.5, 1.5)) + 0.12
+  cost.nurse.sims <- 48 * (runif(sims, 2, 8) / 60) 
   
   prob.neuro.sims <- rbeta(sims, 23.83398, 	667.00607)
 
-  cost.treatment.sims <- rep(sum(cost.txa.dose, cost.sodium, cost.nurse),sims) + cost.needle.sims
+  cost.treatment.sims <- rep(sum(cost.txa.dose, cost.sodium, cost.needle),sims) + cost.nurse.sims
   hospital.cost.placebo.sims <- rep(hospital.cost.placebo, sims) * 1 + rep(neurosurgery.cost, sims) * prob.neuro.sims  ## PLACEHOLDER
   hospital.cost.txa.sims <- rep(hospital.cost.txa, sims) * 1 + rep(neurosurgery.cost, sims) * prob.neuro.sims ## PLACEHOLDER
   
