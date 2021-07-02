@@ -74,8 +74,8 @@ gen.evppi.graph = function(evppi, save = save.results) {
   values = c(values, c(EVPI="black"))
   
   z = ggplot(evppi) + geom_line(aes(x=lambda, y=VoI, colour = Parameters), size=0.6) + 
-    labs(x = "Willingness to pay (£)", text = element_text(size=4)) + 
-    labs(y = "EVPPI (£)", text = element_text(size=4)) + theme_classic() +
+    labs(x = "Willingness to pay (?)", text = element_text(size=4)) + 
+    labs(y = "EVPPI (?)", text = element_text(size=4)) + theme_classic() +
     theme(legend.title = element_blank(), axis.title=element_text(face="bold"), 
           axis.title.x = element_text(margin = margin(t = 7, r = 0, b = 3, l = 0)), 
           axis.title.y = element_text(margin = margin(t = 0, r = 7, b = 0, l = 3)), 
@@ -97,8 +97,8 @@ gen.evppi.graph = function(evppi, save = save.results) {
 gen.evppi.trial.graph = function(evppi, save = save.results) {
   
   z = ggplot(evppi) + geom_line(aes(x=lambda, y=VoI, colour = Parameters, linetype = Parameters), size=0.6) + 
-    labs(x = "Willingness to pay (£)", text = element_text(size=4)) + 
-    labs(y = "EVPPI (£)", text = element_text(size=4)) + theme_classic() +
+    labs(x = "Willingness to pay (?)", text = element_text(size=4)) + 
+    labs(y = "EVPPI (?)", text = element_text(size=4)) + theme_classic() +
     theme(legend.title = element_blank(), axis.title=element_text(face="bold"), 
           axis.title.x = element_text(margin = margin(t = 7, r = 0, b = 3, l = 0)), 
           axis.title.y = element_text(margin = margin(t = 0, r = 7, b = 0, l = 3)), 
@@ -133,7 +133,7 @@ for(a in 1:outer.loops){
   dis.txa.sim <- unlist(disability.txa.sims[a,])
   ae.p.sim <- unlist(ae.placebo.sims[a,])
   ae.t.sim <- unlist(ae.txa.sims[a,])
-  cost.sim[1:3] <- unlist(costs.sims[1,1:3])
+  cost.sim[1:3] <- unlist(costs.sims[a,1:3])
   
   for(b in 1:inner.loops){
 
