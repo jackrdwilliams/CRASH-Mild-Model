@@ -60,7 +60,7 @@ tx.effect.goalseek <- function(x){
   return(z)
 }
 
-hi.risk.thresholds <- seq(from = 0.002, to = 0.02, by = 0.00005)
+hi.risk.thresholds <- seq(from = 0.001, to = 0.01, by = 0.000005)
 threshold.mat <- matrix(0, ncol = 4, nrow = length(hi.risk.thresholds))
 threshold.mat[,1] <- hi.risk.thresholds
 colnames(threshold.mat) <- c("Risk", "70 years old","80 years old","90 years old")
@@ -98,7 +98,7 @@ gen.threshold.dsa <- function(results, save = save.results) {
           panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
           legend.key.width=unit(1.8,"line"), text = element_text(size=7),
           plot.margin=unit(c(0.5,0.5,0,0.5),"cm")) + 
-    scale_x_continuous(labels = scales::percent, limits = c(0.002, 0.02), breaks = seq(0, 0.1, 0.002),expand = c(0, 0)) + 
+    scale_x_continuous(limits = c(min(hi.risk.thresholds), max(hi.risk.thresholds)), breaks = seq(0, 0.1, 0.001), expand = c(0, 0), labels = scales::percent) + 
     scale_y_continuous(limits = c(0.6,1), breaks = seq(0, 1, 0.05), expand = c(0, 0)) 
     
   if(save == TRUE) ggsave(paste("figures\\Threshold-Risk.TxEffect",Sys.Date(),".png"), plot, width=180, height=100, dpi=300, units='mm')
