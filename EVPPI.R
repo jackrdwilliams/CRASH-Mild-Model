@@ -74,8 +74,8 @@ gen.evppi.graph = function(evppi, save = save.results) {
   values = c(values, c(EVPI="black"))
   
   z = ggplot(evppi) + geom_line(aes(x=lambda, y=VoI, colour = Parameters), size=0.6) + 
-    labs(x = "Willingness to pay (?)", text = element_text(size=4)) + 
-    labs(y = "EVPPI (?)", text = element_text(size=4)) + theme_classic() +
+    labs(x = "Willingness to pay (£)", text = element_text(size=4)) + 
+    labs(y = "EVPPI (£)", text = element_text(size=4)) + theme_classic() +
     theme(legend.title = element_blank(), axis.title=element_text(face="bold"), 
           axis.title.x = element_text(margin = margin(t = 7, r = 0, b = 3, l = 0)), 
           axis.title.y = element_text(margin = margin(t = 0, r = 7, b = 0, l = 3)), 
@@ -83,9 +83,8 @@ gen.evppi.graph = function(evppi, save = save.results) {
           legend.key.width=unit(1.8,"line"), text = element_text(size=7),
           plot.margin=unit(c(0.2,0.5,0,0.2),"cm")) + 
     scale_x_continuous(labels = scales::comma, breaks = c(seq(0,100000,5000)), limits = c(0,max(evppi$lambda)), expand = c(0, 0.1)) + 
-    scale_y_continuous(labels = scales::comma, breaks = c(seq(0,400000000,4000000)), limits = c(0,max(evppi$VoI)*1.08), expand = c(0, 0)) + 
-    scale_colour_manual(values=values)
-  
+    scale_y_continuous(labels = scales::comma, breaks = c(seq(0,400000000,5000000)), limits = c(0,max(evppi$VoI)*1.08), expand = c(0, 0)) + 
+    scale_colour_manual(values=values) + 
     geom_vline(xintercept = 20000, linetype="dotted", size=0.25)
   
     if(save == TRUE) ggsave(paste("figures\\EVPPI",Sys.Date(),".png"), z, width=165, height=90, dpi=300, units='mm')
@@ -97,8 +96,8 @@ gen.evppi.graph = function(evppi, save = save.results) {
 gen.evppi.trial.graph = function(evppi, save = save.results) {
   
   z = ggplot(evppi) + geom_line(aes(x=lambda, y=VoI, colour = Parameters, linetype = Parameters), size=0.6) + 
-    labs(x = "Willingness to pay (?)", text = element_text(size=4)) + 
-    labs(y = "EVPPI (?)", text = element_text(size=4)) + theme_classic() +
+    labs(x = "Willingness to pay (£)", text = element_text(size=4)) + 
+    labs(y = "EVPPI (£)", text = element_text(size=4)) + theme_classic() +
     theme(legend.title = element_blank(), axis.title=element_text(face="bold"), 
           axis.title.x = element_text(margin = margin(t = 7, r = 0, b = 3, l = 0)), 
           axis.title.y = element_text(margin = margin(t = 0, r = 7, b = 0, l = 3)), 
@@ -106,7 +105,7 @@ gen.evppi.trial.graph = function(evppi, save = save.results) {
           legend.key.width=unit(1.8,"line"), text = element_text(size=7),
           plot.margin=unit(c(0.5,0.5,0,0.5),"cm")) + 
     scale_x_continuous(labels = scales::comma, breaks = c(seq(0,100000,5000)), limits = c(0,max(evppi$lambda)), expand = c(0, 0.1)) + 
-    scale_y_continuous(labels = scales::comma, breaks = seq(0, 100000000, 4000000), limits = c(0, max(evppi$VoI)*1.08), expand = c(0, 0)) + 
+    scale_y_continuous(labels = scales::comma, breaks = seq(0, 100000000, 5000000), limits = c(0, max(evppi$VoI)*1.08), expand = c(0, 0)) + 
     scale_linetype_manual(values=c("solid", "longdash")) + 
     scale_color_manual(values=c("black", "black")) + 
     geom_vline(xintercept = 20000, linetype="dotted", size=0.25)
@@ -122,7 +121,7 @@ gen.evppi.trial.graph = function(evppi, save = save.results) {
 
 
 
-#### EVPPI for trial parameters ####
+#### EVPPI for trial parameters 
 
 pb.trial = txtProgressBar(min = 0, max = outer.loops, initial = 0, style = 3)
 for(a in 1:outer.loops){
@@ -167,9 +166,9 @@ subset(evppi.trial.long.pop, lambda==20000)
 # Plots
 
 #gen.evppi.graph(evppi.long.pop)
-gen.evppi.trial.graph(evppi.trial.long.pop)
+gen.evppi.trial.graph(evppi.trial.long.pop, TRUE)
 save(evppi.trial.long, file=paste("stored results/evppi.trial.",outer.loops, ".", inner.loops, Sys.Date(),".Rda", sep=""))
-subset(evppi.trial.long.pop, lambda==20000)
+
 
 
 

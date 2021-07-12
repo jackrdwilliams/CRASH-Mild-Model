@@ -154,7 +154,7 @@ incr.qaly <- psa.results$utility.txa - psa.results$utility.placebo
 incr.nmb <- (incr.qaly * 20000) - incr.cost
 icer <- incr.cost / incr.qaly
 
-#### FUNCTIONS #### 
+#### FUNCTIONS
 gen.anova.results <- function(model){
   
   anova <- anova(model)
@@ -243,7 +243,7 @@ gen.ancova.plot()
 # ## PSA - Sensitivity ##
 # 
 # gen.ceac.graph.sens = function(psa, save = save.results) {
-#   
+# 
 #   z = ggplot(psa) + geom_line(aes(x=lambda, y=Probability, colour = Treatment.Effect), size=0.6) +
 #     labs(x = "Willingness to pay (£)", text = element_text(size=4)) +
 #     labs(y = "Probability cost-effective", text = element_text(size=4)) +
@@ -257,16 +257,16 @@ gen.ancova.plot()
 #     scale_x_continuous(labels = scales::comma, breaks = c(seq(0,100000,5000)), limits = c(0,max(psa$lam)), expand = c(0, 0.1)) +
 #     scale_y_continuous(limits = c(0,1), breaks=seq(0,1,0.1), expand = c(0, 0)) +
 #     geom_vline(xintercept = 20000, linetype="dotted", size=0.25)
-#   
-#   
+# 
+# 
 #   if(save == TRUE) ggsave(paste("figures\\CEAC.Sensitivity.Analysis",Sys.Date(),".png"), z, width=140, height=80, dpi=300, units='mm')
-#   
-#   
+# 
+# 
 #   return(z)
-#   
+# 
 # }
 # gen.evpi.graph.sens = function(evpi, save = save.results) {
-#   
+# 
 #   z = ggplot(evpi) + geom_line(aes(x=lambda, y=VoI, colour = Treatment.Effect), size=0.6) +
 #     labs(x = "Willingness to pay (£)", text = element_text(size=4)) +
 #     labs(y = "EVPI (£)", text = element_text(size=4)) +
@@ -280,11 +280,11 @@ gen.ancova.plot()
 #     scale_x_continuous(labels = scales::comma, breaks = c(seq(0,100000,5000)), limits = c(0,max(evpi$lam)), expand = c(0, 0.1)) +
 #     scale_y_continuous(labels = scales::comma, breaks = c(seq(0,800000000,20000000)), limits = c(0,max(evpi$VoI)*1.05), expand = c(0, 0)) +
 #     geom_vline(xintercept = 20000, linetype="dotted", size=0.25)
-#   
+# 
 #   if(save == TRUE) ggsave(paste("figures\\EVPI.Sensitivity",Sys.Date(),".png"), z, width=140, height=80, dpi=300, units='mm')
-#   
+# 
 #   return(z)
-#   
+# 
 # }
 # 
 # psa.results.sens <- matrix(0, sims, 4)
@@ -308,11 +308,11 @@ gen.ancova.plot()
 #     cost.sim <- unlist(costs.sims[p,])
 #     ae.p.sim <- unlist(ae.placebo.sims[p,])
 #     ae.t.sim <- unlist(ae.txa.sims[p,])
-#     
+# 
 #     psa.results.sens[p,] <- run.model(clin.sim, dis.placebo.sim, dis.txa.sim, utility.sim, cost.sim, ae.p = ae.p.sim, ae.t = ae.t.sim)[[1]]
 #     setTxtProgressBar(pb,p)
 #   }
-#   
+# 
 #   res[,w+1] <- gen.ceac.table(psa.results.sens)[[1]][,2]
 #   evpi.res[,w+1] <- gen.ceac.table(psa.results.sens)[[2]][,2]
 # }
@@ -354,7 +354,7 @@ gen.ancova.plot()
 # pb = txtProgressBar(min = 0, max = sims, initial = 0, style = 3)
 # 
 # for(p in 1:sims){
-#   
+# 
 #   clin.sim <- unlist(clin.char.sims[p,])
 #   dis.placebo.sim <- unlist(disability.placebo.sims[p,])
 #   dis.txa.sim <- unlist(disability.txa.sims[p,])
@@ -362,9 +362,9 @@ gen.ancova.plot()
 #   cost.sim <- unlist(costs.sims[p,])
 #   ae.p.sim <- unlist(ae.placebo.sims[p,])
 #   ae.t.sim <- unlist(ae.txa.sims[p,])
-#   
-#   
-#   psa.results.60[p,] <- run.model(clin.sim, dis.placebo.sim, dis.txa.sim, utility.sim, cost = cost.sim, ae.p = ae.p.sim, ae.t = ae.t.sim)[[1]] 
+# 
+# 
+#   psa.results.60[p,] <- run.model(clin.sim, dis.placebo.sim, dis.txa.sim, utility.sim, cost = cost.sim, ae.p = ae.p.sim, ae.t = ae.t.sim)[[1]]
 #   setTxtProgressBar(pb,p)
 # }
 # 
