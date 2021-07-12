@@ -60,13 +60,13 @@ tx.effect.goalseek <- function(x){
   return(z)
 }
 
-hi.risk.thresholds <- seq(from = 0.001, to = 0.01, by = 0.000005)
-threshold.mat <- matrix(0, ncol = 4, nrow = length(hi.risk.thresholds))
+hi.risk.thresholds <- seq(from = 0.0005, to = 0.01, by = 0.00001)
+threshold.mat <- matrix(0, ncol = 5, nrow = length(hi.risk.thresholds))
 threshold.mat[,1] <- hi.risk.thresholds
-colnames(threshold.mat) <- c("Risk", "70 years old","80 years old","90 years old")
+colnames(threshold.mat) <- c("Risk", "60 years old", "70 years old","80 years old","90 years old")
 
-for(a in 1:3){
-  age.v <- c(70,80,90)
+for(a in 1:4){
+  age.v <- c(60,70,80,90)
   age <- age.v[a]
   time.horizon = min(60, 100-ceiling(age))
   acm <- gen.acm()
@@ -82,7 +82,7 @@ for(a in 1:3){
   }
 } 
 
-threshold.long <- as.data.frame(threshold.mat)  %>% gather(Age, Threshold, 2:4)
+threshold.long <- as.data.frame(threshold.mat)  %>% gather(Age, Threshold, 2:5)
 
 
 # Plot 
@@ -98,16 +98,16 @@ gen.threshold.dsa <- function(results, save = save.results) {
           panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
           legend.key.width=unit(1.8,"line"), text = element_text(size=7),
           plot.margin=unit(c(0.5,0.5,0,0.5),"cm")) + 
-    scale_x_continuous(limits = c(min(hi.risk.thresholds), max(hi.risk.thresholds)), breaks = seq(0, 0.1, 0.001), expand = c(0, 0), labels = scales::percent) + 
+    scale_x_continuous(limits = c(min(hi.risk.thresholds), max(hi.risk.thresholds)), breaks = seq(0, 0.1, 0.0005), expand = c(0, 0), 
+                       labels = scales::percent_format(accuracy = 0.01L)) + 
     scale_y_continuous(limits = c(0.6,1), breaks = seq(0, 1, 0.05), expand = c(0, 0)) 
     
   if(save == TRUE) ggsave(paste("figures\\Threshold-Risk.TxEffect",Sys.Date(),".png"), plot, width=180, height=100, dpi=300, units='mm')
   
   return(plot)  
   
-  
 }
 
-gen.threshold.dsa(threshold.long)
+gen.threshold.dsa(threshold.long, FALSE)
 
 
