@@ -22,8 +22,6 @@ disc.c <- 0.035
 disc.o <- 0.035
 
 sims <- 10000
-outer.loops <- 100
-inner.loops <- 100
 
 age <- 80
 male = 0.5 
@@ -56,10 +54,10 @@ non.hi.risk <- 0
 non.hi.risk.sims <- rbeta(sims, 9, 920-9) * 0
 
 smr.year1 <- 235.04/81.2
-smr.year1.sims <- rnorm(sims, smr.year1, 0.41632922)
+smr.year1.sims <- rnorm(sims, smr.year1, 0.301274691)
 
 smr.year2 <- 61.47/39.45
-smr.year2.sims <- rnorm(sims, smr.year2, 0.2350955) 
+smr.year2.sims <- rnorm(sims, smr.year2, 0.162178435) 
 
 clin.names <- c("treatment.effect", "hi.risk", "non.hi.risk", "smr.year1", "smr.year2")
 
@@ -256,7 +254,6 @@ gen.utility.sims <- function(){
   
   utility.values <- data.frame(utility.full, utility.good, utility.moderate, utility.severe, utility.vegetative)
   
-  
 # #  util.plac <- utility.values * matrix(dis.placebo, sims, length(dis.placebo), byrow= T)
 #   util.plac <- utility.values * dis.placebo
 #   util.values.plac <- apply(util.plac,  1,  sum )
@@ -375,8 +372,14 @@ gen.costs <- function(){
   prob.neuro.sims <- rbeta(sims, 23.83398, 	667.00607)
 
   cost.treatment.sims <- rep(sum(cost.txa.dose, cost.sodium, cost.needle),sims) + cost.nurse.sims
-  hospital.cost.placebo.sims <- rep(hospital.cost.placebo, sims) * 1 + rep(neurosurgery.cost, sims) * prob.neuro.sims  ## PLACEHOLDER
-  hospital.cost.txa.sims <- rep(hospital.cost.txa, sims) * 1 + rep(neurosurgery.cost, sims) * prob.neuro.sims ## PLACEHOLDER
+
+  los.sims <- rgamma(sims, shape = 32, scale = 0.125) # same for both groups
+
+  hospital.los.cost.placebo.sims <- los.sims * hospital.cost.day + hospital.cost.initial
+  hospital.los.cost.txa.sims <- los.sims * hospital.cost.day + hospital.cost.initial
+
+  hospital.cost.placebo.sims <- hospital.los.cost.placebo.sims * 1 + rep(neurosurgery.cost, sims) * prob.neuro.sims
+  hospital.cost.txa.sims <- hospital.los.cost.txa.sims * 1 + rep(neurosurgery.cost, sims) * prob.neuro.sims
   
   # Monitoring costs # 
 
