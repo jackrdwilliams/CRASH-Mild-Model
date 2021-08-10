@@ -96,12 +96,12 @@ gen.ceac.graph = function(psa, save = save.results) {
           panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
           legend.key.width=unit(1.8,"line"), text = element_text(size=7),
           plot.margin=unit(c(0.5,0.5,0,0.5),"cm")) + 
-    scale_x_continuous(labels = scales::comma, breaks = c(seq(0,100000,5000)), limits = c(0,max(psa$lam)), expand = c(0, 0.1)) + 
+    scale_x_continuous(labels = scales::comma, breaks = c(seq(0,100000,10000)), limits = c(0,max(psa$lam)), expand = c(0, 0.1)) + 
     scale_y_continuous(limits = c(0,1), breaks=seq(0,1,0.1), expand = c(0, 0)) + 
     geom_vline(xintercept = 20000, linetype="dotted", size=0.25)
   
   
-  if(save == TRUE) ggsave(paste("figures\\CEAC",Sys.Date(),".png"), z, width=107, height=70, dpi=300, units='mm')
+  if(save == TRUE) ggsave(paste("figures\\CEAC",Sys.Date(),".png"), z, width=84, height=60, dpi=300, units='mm')
   
   
   return(z)
@@ -208,16 +208,16 @@ round(sum(rank.nmb[1:2,2]),3)
 
 gen.ancova.plot <- function(result1 = rank.cost, result2 = rank.qaly, result3 = rank.nmb, save = save.results, name = ""){
 
-  res1 <- data.frame(result1, char = "Incr. Costs")
-  res2 <- data.frame(result2, char = "Incr. QALYs")
-  res3 <- data.frame(result3, char = "Incr. NMB")
+  res1 <- data.frame(result1, char = "Incremental Costs")
+  res2 <- data.frame(result2, char = "Incremental QALYs")
+  res3 <- data.frame(result3, char = "Incremental NMB")
 
   res <- rbind(res1, res2, res3)  
   res$group <- factor(res$group, levels = rev(res3$group))
   res$char = factor(res$char, levels = unique(res$char))
   
   plot <- ggplot(res, aes(x = proportion.var, y = group)) + geom_bar(stat="identity", width=0.5,  colour = "black", fill = "steelblue") +
-    labs(x = "Proportion of variance explained by parameter", text = element_text(size=2.5)) + 
+    labs(x = "Proportion of variance explained by parameter", text = element_text(size=4)) + 
     theme_classic() + 
     theme(axis.title= element_text(face="bold"), 
           axis.title.x = element_text(size = 9, face = "bold", margin = margin(t = 7, r = 0, b = 3, l = 0)), 
@@ -228,9 +228,9 @@ gen.ancova.plot <- function(result1 = rank.cost, result2 = rank.qaly, result3 = 
     scale_x_continuous(labels = scales::percent, limits = c(0,1), expand = c(0, 0.001)) + 
     facet_wrap(~ char)
 
-  plot <- plot + theme(panel.spacing.x=unit(1.3, "lines"))
+  plot <- plot + theme(panel.spacing.x=unit(1.4, "lines"))
   
-  if(save == TRUE) ggsave(paste("figures\\ANCOVA", name, Sys.Date(),".png"), plot, width=135, height=65, dpi=300, units='mm')
+  if(save == TRUE) ggsave(paste("figures\\ANCOVA", name, Sys.Date(),".png"), plot, width=174, height=75, dpi=300, units='mm')
   
   return(plot)
 }
