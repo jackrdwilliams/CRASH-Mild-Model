@@ -175,242 +175,269 @@ save(evppi.trial.long, file=paste("stored results/evppi.trial.",outer.loops, "."
 
 #### EVPPI for individual loops - 'Double Monte Carlo loop method' 
 
+parameter.groups <- 7
+evppi.wide <- data.frame(lambda = lambda,
+                         evpi = evpi[,2], 
+                         tx = NA,
+                         mort = NA,
+                         smr = NA,
+                         outcomes = NA,
+                         utility = NA, 
+                         costs = NA, 
+                         ae = NA)
+colnames(evppi.wide) <- c('lambda', 'EVPI', 'Treatment effect',"Mortality risk", 'SMR', 'Outcomes post-TBI', 'Utility values', 'Costs', "Adverse events")
+
+
 pb = txtProgressBar(min = 0, max = outer.loops*7, initial = 0, style = 3)
 
-## EVPPI loops - TXA treatment effect
-for(a in 1:outer.loops){
-  
-  ## 1. Select the 'partial' parameter from the outer loop 
-  clin.sim <- unlist(clin.char.sims[a,])
-  
-  for(b in 1:inner.loops){
+for(j in 1:parameter.groups){
+  ## EVPPI loops - TXA treatment effect
+  for(a in 1:outer.loops){
     
-    # Select traditional parameters, minus the outer loop parameter
     
-    clin.sim[2:5] <- unlist(clin.char.sims[b,2:5]) # Keep SMRs in PSA 
-    dis.placebo.sim <- unlist(disability.placebo.sims[b,])
-    dis.txa.sim <- unlist(disability.txa.sims[b,])
-    utility.sim <- unlist(utility.sims[b,])
-    cost.sim <- unlist(costs.sims[b,])
-    ae.p.sim <- unlist(ae.placebo.sims[b,])
-    ae.t.sim <- unlist(ae.txa.sims[b,])
+    for(b in 1:inner.loops){
+      
+      if(j==1) ev.tx <- a else tx <- b
+      if(j==2) ev.mort <- a else ev.mort <- b 
+      if(j==3) ev.smr <- a else ev.smr <- b   
+      if(j==4) ev.outcomes <- a else ev.outcomes <- b      
+      if(j==5) ev.utility <- a else ev.utility <- b
+      if(j==6) ev.costs <- a else ev.costs <- b
+      if(j==7) ev.ae <- a else ev.ae <- b  
     
-    inner.results[b,] <- run.model(clin.sim, dis.placebo.sim, dis.txa.sim, utility.sim, cost.sim, ae.p = ae.p.sim, ae.t = ae.t.sim)[[1]] 
+      clin.sim[1] <- unlist(clin.char.sims[ev.tx,1])
+      clin.sim[2] <- unlist(clin.char.sims[ev.mort,2])
+      clin.sim[4:5] <- unlist(clin.char.sims[ev.smr,4:5])
+      
+      dis.placebo.sim <- unlist(disability.placebo.sims[ev.outcomes,])
+      dis.txa.sim <- unlist(disability.txa.sims[ev.outcomes,])
+      
+      utility.sim <- unlist(utility.sims[ev.utility,])
+      cost.sim <- unlist(costs.sims[ev.costs,])
+      ae.p.sim <- unlist(ae.placebo.sims[ev.ae,])
+      ae.t.sim <- unlist(ae.txa.sims[ev.ae,])
+      
+      inner.results[b,] <- run.model(clin.sim, dis.placebo.sim, dis.txa.sim, utility.sim, cost.sim, ae.p = ae.p.sim, ae.t = ae.t.sim)[[1]] 
+    }
+    
+    #after each inner loop PSA, calculate the mean NMB for each tx and store the results
+    nmb <- gen.nmb(inner.results)
+    evppi.results.placebo[a,] <- nmb[[1]]
+    evppi.results.txa[a,] <- nmb[[2]]
+    setTxtProgressBar(pb, (j-1)*outer.loops + a) 
   }
   
-  #after each inner loop PSA, calculate the mean NMB for each tx and store the results
-  nmb <- gen.nmb(inner.results)
-  evppi.results.placebo[a,] <- nmb[[1]]
-  evppi.results.txa[a,] <- nmb[[2]]
-  setTxtProgressBar(pb,a)
+  evppi.wide[,j+2] <- gen.evppi.results(evppi.results.placebo, evppi.results.txa, lambda)[,2]
+
 }
-evppi.tx.effect <- gen.evppi.results(evppi.results.placebo, evppi.results.txa, lambda)
-
-
-## EVPPI loops - Head injury
-for(a in 1:outer.loops){
-  
-  ## 1. Select the 'partial' parameter from the outer loop 
-  clin.sim <- unlist(clin.char.sims[a,])
-  
-  for(b in 1:inner.loops){
-    
-    # Select traditional parameters, minus the outer loop parameter
-    
-    clin.sim[c(1,3,4,5)] <- unlist(clin.char.sims[b,c(1,3,4,5)]) # Keep SMRs in PSA 
-    dis.placebo.sim <- unlist(disability.placebo.sims[b,])
-    dis.txa.sim <- unlist(disability.txa.sims[b,])
-    utility.sim <- unlist(utility.sims[b,])
-    cost.sim <- unlist(costs.sims[b,])
-    ae.p.sim <- unlist(ae.placebo.sims[b,])
-    ae.t.sim <- unlist(ae.txa.sims[b,])
-    
-    inner.results[b,] <- run.model(clin.sim, dis.placebo.sim, dis.txa.sim, utility.sim, cost.sim, ae.p = ae.p.sim, ae.t = ae.t.sim)[[1]] 
-  }
-  
-  #after each inner loop PSA, calculate the mean NMB for each tx and store the results
-  nmb <- gen.nmb(inner.results)
-  evppi.results.placebo[a,] <- nmb[[1]]
-  evppi.results.txa[a,] <- nmb[[2]]
-  setTxtProgressBar(pb,outer.loops + a)
-}
-evppi.head.injury <- gen.evppi.results(evppi.results.placebo, evppi.results.txa, lambda)
-
-## EVPPI loops - SMRs
-for(a in 1:outer.loops){
-  
-  ## 1. Select the 'partial' parameter from the outer loop 
-  clin.sim <- unlist(clin.char.sims[a,])
-  
-  for(b in 1:inner.loops){
-    
-    # Select traditional parameters, minus the outer loop parameter
-    
-    #clin.sim <- unlist(clin.char.sims[b,])
-    clin.sim[1:3] <- unlist(clin.char.sims[b,1:3]) # only SMRs excl from PSA 
-    dis.placebo.sim <- unlist(disability.placebo.sims[b,])
-    dis.txa.sim <- unlist(disability.txa.sims[b,])
-    utility.sim <- unlist(utility.sims[b,])
-    cost.sim <- unlist(costs.sims[b,])
-    ae.p.sim <- unlist(ae.placebo.sims[b,])
-    ae.t.sim <- unlist(ae.txa.sims[b,])
-    
-    inner.results[b,] <- run.model(clin.sim, dis.placebo.sim, dis.txa.sim, utility.sim, cost.sim, ae.p = ae.p.sim, ae.t = ae.t.sim)[[1]] 
-  }
-  
-  #after each inner loop PSA, calculate the mean NMB for each tx and store the results
-  nmb <- gen.nmb(inner.results)
-  evppi.results.placebo[a,] <- nmb[[1]]
-  evppi.results.txa[a,] <- nmb[[2]]
-  setTxtProgressBar(pb,outer.loops*2 +a)
-}
-evppi.smr <- gen.evppi.results(evppi.results.placebo, evppi.results.txa, lambda)
-
-
-## EVPPI loops - Disability / outcomes   
-for(a in 1:outer.loops){
-  
-  ## 1. Select the 'partial' parameter from the outer loop 
-  dis.placebo.sim <- unlist(disability.placebo.sims[a,])
-  dis.txa.sim <- unlist(disability.txa.sims[a,])
-
-  
-  for(b in 1:inner.loops){
-    
-    # Select traditional parameters, minus the outer loop parameter
-    
-    clin.sim <- unlist(clin.char.sims[b,])
-    # dis.placebo.sim <- unlist(disability.placebo.sims[b,])
-    # dis.txa.sim <- unlist(disability.txa.sims[b,])
-    utility.sim <- unlist(utility.sims[b,])
-    cost.sim <- unlist(costs.sims[b,])
-    ae.p.sim <- unlist(ae.placebo.sims[b,])
-    ae.t.sim <- unlist(ae.txa.sims[b,])
-    
-    inner.results[b,] <- run.model(clin.sim, dis.placebo.sim, dis.txa.sim, utility.sim, cost.sim, ae.p = ae.p.sim, ae.t = ae.t.sim)[[1]] 
-  }
-  
-  #after each inner loop PSA, calculate the mean NMB for each tx and store the results
-  nmb <- gen.nmb(inner.results)
-  evppi.results.placebo[a,] <- nmb[[1]]
-  evppi.results.txa[a,] <- nmb[[2]]
-  setTxtProgressBar(pb,outer.loops*3 + a)
-}
-evppi.disability <- gen.evppi.results(evppi.results.placebo, evppi.results.txa, lambda)
-
-
-## EVPPI loops - Utility  
-for(a in 1:outer.loops){
-  
-  ## 1. Select the 'partial' parameter from the outer loop 
-  utility.sim <- unlist(utility.sims[a,])
-  
-  for(b in 1:inner.loops){
-    
-    # Select traditional parameters, minus the outer loop parameter
-    
-    clin.sim <- unlist(clin.char.sims[b,])
-    dis.placebo.sim <- unlist(disability.placebo.sims[b,])
-    dis.txa.sim <- unlist(disability.txa.sims[b,])
-    #utility.sim <- unlist(utility.sims[b,])
-    cost.sim <- unlist(costs.sims[b,])
-    ae.p.sim <- unlist(ae.placebo.sims[b,])
-    ae.t.sim <- unlist(ae.txa.sims[b,])
-    
-    inner.results[b,] <- run.model(clin.sim, dis.placebo.sim, dis.txa.sim, utility.sim, cost.sim, ae.p = ae.p.sim, ae.t = ae.t.sim)[[1]] 
-  }
-  
-  #after each inner loop PSA, calculate the mean NMB for each tx and store the results
-  nmb <- gen.nmb(inner.results)
-  evppi.results.placebo[a,] <- nmb[[1]]
-  evppi.results.txa[a,] <- nmb[[2]]
-  setTxtProgressBar(pb,outer.loops*4 + a)
-}
-evppi.utility <- gen.evppi.results(evppi.results.placebo, evppi.results.txa, lambda)
-
-
-## EVPPI loops - Costs  
-for(a in 1:outer.loops){
-  
-  ## 1. Select the 'partial' parameter from the outer loop 
-  cost.sim <- unlist(costs.sims[a,])
-  
-  for(b in 1:inner.loops){
-    
-    # Select traditional parameters, minus the outer loop parameter
-    
-    clin.sim <- unlist(clin.char.sims[b,])
-    dis.placebo.sim <- unlist(disability.placebo.sims[b,])
-    dis.txa.sim <- unlist(disability.txa.sims[b,])
-    utility.sim <- unlist(utility.sims[b,])
-    #cost.sim <- unlist(costs.sims[b,])
-    ae.p.sim <- unlist(ae.placebo.sims[b,])
-    ae.t.sim <- unlist(ae.txa.sims[b,])
-    
-    inner.results[b,] <- run.model(clin.sim, dis.placebo.sim, dis.txa.sim, utility.sim, cost.sim, ae.p = ae.p.sim, ae.t = ae.t.sim)[[1]] 
-  }
-  
-  #after each inner loop PSA, calculate the mean NMB for each tx and store the results
-  nmb <- gen.nmb(inner.results)
-  evppi.results.placebo[a,] <- nmb[[1]]
-  evppi.results.txa[a,] <- nmb[[2]]
-  setTxtProgressBar(pb,outer.loops*5 + a)
-}
-evppi.costs <- gen.evppi.results(evppi.results.placebo, evppi.results.txa, lambda)
-
-
-
-## EVPPI loops - Adverse events  
-for(a in 1:outer.loops){
-  
-  ## 1. Select the 'partial' parameter from the outer loop 
-  ae.p.sim <- unlist(ae.placebo.sims[b,])
-  ae.t.sim <- unlist(ae.txa.sims[b,])
-  
-  for(b in 1:inner.loops){
-    
-    # Select traditional parameters, minus the outer loop parameter
-    
-    clin.sim <- unlist(clin.char.sims[b,])
-    dis.placebo.sim <- unlist(disability.placebo.sims[b,])
-    dis.txa.sim <- unlist(disability.txa.sims[b,])
-    utility.sim <- unlist(utility.sims[b,])
-    cost.sim <- unlist(costs.sims[b,])
-    
-    inner.results[b,] <- run.model(clin.sim, dis.placebo.sim, dis.txa.sim, utility.sim, cost.sim, ae.p = ae.p.sim, ae.t = ae.t.sim)[[1]] 
-  }
-  
-  #after each inner loop PSA, calculate the mean NMB for each tx and store the results
-  nmb <- gen.nmb(inner.results)
-  evppi.results.placebo[a,] <- nmb[[1]]
-  evppi.results.txa[a,] <- nmb[[2]]
-  setTxtProgressBar(pb,outer.loops*6 + a)
-}
-evppi.ae <- gen.evppi.results(evppi.results.placebo, evppi.results.txa, lambda)
-
-
 
 
 
 ## Reshaping and plotting ## 
-
-evppi.wide <- data.frame(evpi,
-                         evppi.tx.effect[,2], 
-                         evppi.head.injury[,2],
-                         evppi.smr[,2],
-                         evppi.disability[,2],
-                         evppi.utility[,2],
-                         evppi.costs[,2], 
-                         evppi.ae[,2])
-colnames(evppi.wide) <- c('lambda', 'EVPI', 'Treatment effect',"Mortality risk", 'SMR', 'Outcomes post-TBI', 'Utility values', 'Costs', "Adverse events")
 
 evppi.long <- evppi.wide %>% gather(Parameters, VoI, 2:9)
 evppi.long.pop <- evppi.long
 evppi.long.pop$VoI <- evppi.long$VoI * effective.population
 
 evppi.long.pop$Parameters <- factor(evppi.long.pop$Parameters, levels = unique(evppi.long.pop$Parameters))
+
 ## Save EVPPI's
 
-save(evppi.long, file=paste("stored results/evppi.parms.new.",Sys.Date(),".Rda", sep=""))
+save(evppi.long, file=paste("stored results/evppi.parms.new1.",Sys.Date(),".Rda", sep=""))
 gen.evppi.graph(evppi.long.pop)
 
+
+
+
+
+
+
+
+# 
+# 
+# 
+# 
+# 
+# ## EVPPI loops - Head injury
+# for(a in 1:outer.loops){
+#   
+#   ## 1. Select the 'partial' parameter from the outer loop 
+#   clin.sim <- unlist(clin.char.sims[a,])
+#   
+#   for(b in 1:inner.loops){
+#     
+#     # Select traditional parameters, minus the outer loop parameter
+#     
+#     clin.sim[c(1,3,4,5)] <- unlist(clin.char.sims[b,c(1,3,4,5)]) # Keep SMRs in PSA 
+#     dis.placebo.sim <- unlist(disability.placebo.sims[b,])
+#     dis.txa.sim <- unlist(disability.txa.sims[b,])
+#     utility.sim <- unlist(utility.sims[b,])
+#     cost.sim <- unlist(costs.sims[b,])
+#     ae.p.sim <- unlist(ae.placebo.sims[b,])
+#     ae.t.sim <- unlist(ae.txa.sims[b,])
+#     
+#     inner.results[b,] <- run.model(clin.sim, dis.placebo.sim, dis.txa.sim, utility.sim, cost.sim, ae.p = ae.p.sim, ae.t = ae.t.sim)[[1]] 
+#   }
+#   
+#   #after each inner loop PSA, calculate the mean NMB for each tx and store the results
+#   nmb <- gen.nmb(inner.results)
+#   evppi.results.placebo[a,] <- nmb[[1]]
+#   evppi.results.txa[a,] <- nmb[[2]]
+#   setTxtProgressBar(pb,outer.loops + a)
+# }
+# evppi.head.injury <- gen.evppi.results(evppi.results.placebo, evppi.results.txa, lambda)
+# 
+# ## EVPPI loops - SMRs
+# for(a in 1:outer.loops){
+#   
+#   ## 1. Select the 'partial' parameter from the outer loop 
+#   clin.sim <- unlist(clin.char.sims[a,])
+#   
+#   for(b in 1:inner.loops){
+#     
+#     # Select traditional parameters, minus the outer loop parameter
+#     
+#     #clin.sim <- unlist(clin.char.sims[b,])
+#     clin.sim[1:3] <- unlist(clin.char.sims[b,1:3]) # only SMRs excl from PSA 
+#     dis.placebo.sim <- unlist(disability.placebo.sims[b,])
+#     dis.txa.sim <- unlist(disability.txa.sims[b,])
+#     utility.sim <- unlist(utility.sims[b,])
+#     cost.sim <- unlist(costs.sims[b,])
+#     ae.p.sim <- unlist(ae.placebo.sims[b,])
+#     ae.t.sim <- unlist(ae.txa.sims[b,])
+#     
+#     inner.results[b,] <- run.model(clin.sim, dis.placebo.sim, dis.txa.sim, utility.sim, cost.sim, ae.p = ae.p.sim, ae.t = ae.t.sim)[[1]] 
+#   }
+#   
+#   #after each inner loop PSA, calculate the mean NMB for each tx and store the results
+#   nmb <- gen.nmb(inner.results)
+#   evppi.results.placebo[a,] <- nmb[[1]]
+#   evppi.results.txa[a,] <- nmb[[2]]
+#   setTxtProgressBar(pb,outer.loops*2 +a)
+# }
+# evppi.smr <- gen.evppi.results(evppi.results.placebo, evppi.results.txa, lambda)
+# 
+# 
+# ## EVPPI loops - Disability / outcomes   
+# for(a in 1:outer.loops){
+#   
+#   ## 1. Select the 'partial' parameter from the outer loop 
+#   dis.placebo.sim <- unlist(disability.placebo.sims[a,])
+#   dis.txa.sim <- unlist(disability.txa.sims[a,])
+# 
+#   
+#   for(b in 1:inner.loops){
+#     
+#     # Select traditional parameters, minus the outer loop parameter
+#     
+#     clin.sim <- unlist(clin.char.sims[b,])
+#     # dis.placebo.sim <- unlist(disability.placebo.sims[b,])
+#     # dis.txa.sim <- unlist(disability.txa.sims[b,])
+#     utility.sim <- unlist(utility.sims[b,])
+#     cost.sim <- unlist(costs.sims[b,])
+#     ae.p.sim <- unlist(ae.placebo.sims[b,])
+#     ae.t.sim <- unlist(ae.txa.sims[b,])
+#     
+#     inner.results[b,] <- run.model(clin.sim, dis.placebo.sim, dis.txa.sim, utility.sim, cost.sim, ae.p = ae.p.sim, ae.t = ae.t.sim)[[1]] 
+#   }
+#   
+#   #after each inner loop PSA, calculate the mean NMB for each tx and store the results
+#   nmb <- gen.nmb(inner.results)
+#   evppi.results.placebo[a,] <- nmb[[1]]
+#   evppi.results.txa[a,] <- nmb[[2]]
+#   setTxtProgressBar(pb,outer.loops*3 + a)
+# }
+# evppi.disability <- gen.evppi.results(evppi.results.placebo, evppi.results.txa, lambda)
+# 
+# 
+# ## EVPPI loops - Utility  
+# for(a in 1:outer.loops){
+#   
+#   ## 1. Select the 'partial' parameter from the outer loop 
+#   utility.sim <- unlist(utility.sims[a,])
+#   
+#   for(b in 1:inner.loops){
+#     
+#     # Select traditional parameters, minus the outer loop parameter
+#     
+#     clin.sim <- unlist(clin.char.sims[b,])
+#     dis.placebo.sim <- unlist(disability.placebo.sims[b,])
+#     dis.txa.sim <- unlist(disability.txa.sims[b,])
+#     #utility.sim <- unlist(utility.sims[b,])
+#     cost.sim <- unlist(costs.sims[b,])
+#     ae.p.sim <- unlist(ae.placebo.sims[b,])
+#     ae.t.sim <- unlist(ae.txa.sims[b,])
+#     
+#     inner.results[b,] <- run.model(clin.sim, dis.placebo.sim, dis.txa.sim, utility.sim, cost.sim, ae.p = ae.p.sim, ae.t = ae.t.sim)[[1]] 
+#   }
+#   
+#   #after each inner loop PSA, calculate the mean NMB for each tx and store the results
+#   nmb <- gen.nmb(inner.results)
+#   evppi.results.placebo[a,] <- nmb[[1]]
+#   evppi.results.txa[a,] <- nmb[[2]]
+#   setTxtProgressBar(pb,outer.loops*4 + a)
+# }
+# evppi.utility <- gen.evppi.results(evppi.results.placebo, evppi.results.txa, lambda)
+# 
+# 
+# ## EVPPI loops - Costs  
+# for(a in 1:outer.loops){
+#   
+#   ## 1. Select the 'partial' parameter from the outer loop 
+#   cost.sim <- unlist(costs.sims[a,])
+#   
+#   for(b in 1:inner.loops){
+#     
+#     # Select traditional parameters, minus the outer loop parameter
+#     
+#     clin.sim <- unlist(clin.char.sims[b,])
+#     dis.placebo.sim <- unlist(disability.placebo.sims[b,])
+#     dis.txa.sim <- unlist(disability.txa.sims[b,])
+#     utility.sim <- unlist(utility.sims[b,])
+#     #cost.sim <- unlist(costs.sims[b,])
+#     ae.p.sim <- unlist(ae.placebo.sims[b,])
+#     ae.t.sim <- unlist(ae.txa.sims[b,])
+#     
+#     inner.results[b,] <- run.model(clin.sim, dis.placebo.sim, dis.txa.sim, utility.sim, cost.sim, ae.p = ae.p.sim, ae.t = ae.t.sim)[[1]] 
+#   }
+#   
+#   #after each inner loop PSA, calculate the mean NMB for each tx and store the results
+#   nmb <- gen.nmb(inner.results)
+#   evppi.results.placebo[a,] <- nmb[[1]]
+#   evppi.results.txa[a,] <- nmb[[2]]
+#   setTxtProgressBar(pb,outer.loops*5 + a)
+# }
+# evppi.costs <- gen.evppi.results(evppi.results.placebo, evppi.results.txa, lambda)
+# 
+# 
+# 
+# ## EVPPI loops - Adverse events  
+# for(a in 1:outer.loops){
+#   
+#   ## 1. Select the 'partial' parameter from the outer loop 
+#   ae.p.sim <- unlist(ae.placebo.sims[b,])
+#   ae.t.sim <- unlist(ae.txa.sims[b,])
+#   
+#   for(b in 1:inner.loops){
+#     
+#     # Select traditional parameters, minus the outer loop parameter
+#     
+#     clin.sim <- unlist(clin.char.sims[b,])
+#     dis.placebo.sim <- unlist(disability.placebo.sims[b,])
+#     dis.txa.sim <- unlist(disability.txa.sims[b,])
+#     utility.sim <- unlist(utility.sims[b,])
+#     cost.sim <- unlist(costs.sims[b,])
+#     
+#     inner.results[b,] <- run.model(clin.sim, dis.placebo.sim, dis.txa.sim, utility.sim, cost.sim, ae.p = ae.p.sim, ae.t = ae.t.sim)[[1]] 
+#   }
+#   
+#   #after each inner loop PSA, calculate the mean NMB for each tx and store the results
+#   nmb <- gen.nmb(inner.results)
+#   evppi.results.placebo[a,] <- nmb[[1]]
+#   evppi.results.txa[a,] <- nmb[[2]]
+#   setTxtProgressBar(pb,outer.loops*6 + a)
+# }
+# evppi.ae <- gen.evppi.results(evppi.results.placebo, evppi.results.txa, lambda)
+# 
+# 
+# 
