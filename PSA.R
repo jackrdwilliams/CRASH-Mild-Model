@@ -136,7 +136,9 @@ gen.evpi.graph(evpi)
 subset(ceac, lam==20000)
 subset(evpi, lam==20000)
 subset(evpi, lam==20000) * effective.population
-
+subset(evpi, lam==20000) * effective.population5
+subset(evpi, lam==20000) * effective.population10
+subset(evpi, lam==20000) * effective.population30
 
 
 ## ANCOVA ## 

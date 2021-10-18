@@ -55,7 +55,8 @@ pop30 <- ons.pop.proj[,c(1, 6:(5+30))] ## Removing 2018 to 2021, and years beyon
 pop.matrix30 <- subset(pop30, Ages>=70) 
 pop.matrix.inc30 <- colSums(pop.matrix30[,-1] * 1000 * incidence) # adjusting for per 1000 data and incidence 
 total30 <- as.numeric(pop.matrix.inc30) * prop.mild 
-effective.population.30 <- sum(total30 * (1/(1+discount)^(0:(30-1))))
+effective.population30 <- sum(total30 * (1/(1+discount)^(0:(30-1))))
+effective.population5 <- sum(total30[1:5] * (1/(1+discount)^(0:(5-1))))
 effective.population10 <- sum(total30[1:10] * (1/(1+discount)^(0:(10-1))))
 
 
