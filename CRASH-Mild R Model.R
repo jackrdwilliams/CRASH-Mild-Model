@@ -544,6 +544,8 @@ run.model <- function(clinical = clin.char, dis.plac = disability.placebo, dis.t
                 cost.txa = cost.sum[2], 
                 utility.txa = utility.sum[2]), 
               icer = icer)) 
+  } else if(output.type==9){
+      return(trace)
   } else return(icer)
   
   
@@ -554,3 +556,4 @@ run.model <- function(clinical = clin.char, dis.plac = disability.placebo, dis.t
 ## Deterministic results 
 run.model(clin.char, dis.plac = disability.placebo, dis.txa = disability.txa, util.values = utility,
           cost = costs, dec = utility.decrement, ae.p = ae.placebo, ae.t = ae.txa, d = discount.c, o = discount.o)
+
