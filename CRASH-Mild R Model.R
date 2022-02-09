@@ -50,7 +50,7 @@ treatment.effect.log.se <- (log(1.076571) - log(0.45158))/(2*1.96)
 treatment.effect.sims <- exp(rnorm(sims, log(treatment.effect), treatment.effect.log.se))
 
 hi.risk <- 0.0208831
-hi.risk.sims <- rtri(sims, min = 0.005, max = 0.05, mode = hi.risk)
+hi.risk.sims <- rtri(sims, min = 0.01, max = 0.05, mode = hi.risk)
 
 non.hi.risk <- 0
 non.hi.risk.sims <- rbeta(sims, 9, 920-9) * 0
