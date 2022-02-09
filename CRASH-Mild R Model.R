@@ -7,7 +7,6 @@ if(!require(ggplot2)) install.packages('ggplot2')
 if(!require(MCMCpack)) install.packages('MCMCpack')
 if(!require(EnvStats)) install.packages('EnvStats')
 
-
 library(tidyr)
 library(dplyr)
 library(ggplot2)
@@ -50,7 +49,7 @@ treatment.effect.log.se <- (log(1.076571) - log(0.45158))/(2*1.96)
 
 treatment.effect.sims <- exp(rnorm(sims, log(treatment.effect), treatment.effect.log.se))
 
-hi.risk <- 0.0285720
+hi.risk <- 0.0208831
 hi.risk.sims <- rtri(sims, min = 0.005, max = 0.05, mode = hi.risk)
 
 non.hi.risk <- 0
