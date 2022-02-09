@@ -108,6 +108,6 @@ gen.threshold.dsa <- function(results, save = save.results) {
   
 }
 
-gen.threshold.dsa(threshold.long, FALSE)
+gen.threshold.dsa(threshold.long)
 
 
