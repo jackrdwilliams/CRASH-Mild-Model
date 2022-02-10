@@ -320,8 +320,8 @@ gen.ancova.plot()
 #   evpi.res[,w+1] <- gen.ceac.table(psa.results.sens)[[2]][,2]
 # }
 # 
-# colnames(res) <- c("lambda", "0.8 (0.52-1.24)", "0.9 (0.58-1.39)", "0.95 (0.62-1.47)")
-# colnames(evpi.res) <- colnames(res)
+# colnames(res) <- c("lambda", "Base case: 0.7 (0.45-1.08)", "0.8 (0.52-1.24)", "0.9 (0.58-1.39)", "0.95 (0.62-1.47)")
+# colnames(evpi.res) <- c("lambda", "0.8 (0.52-1.24)", "0.9 (0.58-1.39)", "0.95 (0.62-1.47)")
 # 
 # psa.sens <- res %>% gather(Treatment.Effect, Probability, 2:5)
 # psa.sens$Treatment.Effect <- factor(psa.sens$Treatment.Effect, levels = unique(psa.sens$Treatment.Effect))
