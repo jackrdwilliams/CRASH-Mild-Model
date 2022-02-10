@@ -246,7 +246,7 @@ gen.ancova.plot()
 # 
 # gen.ceac.graph.sens = function(psa, save = save.results) {
 # 
-#   z = ggplot(psa) + geom_line(aes(x=lambda, y=Probability, colour = Treatment.Effect), size=0.6) +
+#   z = ggplot(psa) + geom_line(aes(x=lambda, y=Probability, colour=Treatment.Effect), size=0.6) +
 #     labs(x = "Willingness to pay (£)", text = element_text(size=4)) +
 #     labs(y = "Probability cost-effective", text = element_text(size=4)) +
 #     labs(colour = "Risk ratio (95% CI)", element_text(size=4)) + theme_classic() +
@@ -258,6 +258,7 @@ gen.ancova.plot()
 #           plot.margin=unit(c(0.5,0.5,0,0.5),"cm")) +
 #     scale_x_continuous(labels = scales::comma, breaks = c(seq(0,100000,5000)), limits = c(0,max(psa$lam)), expand = c(0, 0.1)) +
 #     scale_y_continuous(limits = c(0,1), breaks=seq(0,1,0.1), expand = c(0, 0)) +
+#     scale_colour_manual(values=c("black", "#F8766D", "#00BA38", "#619CFF")) +
 #     geom_vline(xintercept = 20000, linetype="dotted", size=0.25)
 # 
 # 
@@ -296,8 +297,8 @@ gen.ancova.plot()
 # tx.effect.alt <- data.frame(a = exp(rnorm(sims, log(0.80), 0.2216285)),
 #                             b = exp(rnorm(sims, log(0.90), 0.2216285)),
 #                             c = exp(rnorm(sims, log(0.95), 0.2216285)))
-# res <- data.frame(lambda = lambda, a = NA, b = NA, c = NA)
-# evpi.res <- res
+# res <- data.frame(ceac, a = NA, b = NA, c = NA)
+# evpi.res <- data.frame(lambda = lambda, a = NA, b = NA, c = NA)
 # 
 # for(w in 1:3){
 #   for(p in 1:sims){
@@ -315,14 +316,15 @@ gen.ancova.plot()
 #     setTxtProgressBar(pb,p)
 #   }
 # 
-#   res[,w+1] <- gen.ceac.table(psa.results.sens)[[1]][,2]
+#   res[,w+2] <- gen.ceac.table(psa.results.sens)[[1]][,2]
 #   evpi.res[,w+1] <- gen.ceac.table(psa.results.sens)[[2]][,2]
 # }
 # 
 # colnames(res) <- c("lambda", "0.8 (0.52-1.24)", "0.9 (0.58-1.39)", "0.95 (0.62-1.47)")
 # colnames(evpi.res) <- colnames(res)
 # 
-# psa.sens <- res %>% gather(Treatment.Effect, Probability, 2:4)
+# psa.sens <- res %>% gather(Treatment.Effect, Probability, 2:5)
+# psa.sens$Treatment.Effect <- factor(psa.sens$Treatment.Effect, levels = unique(psa.sens$Treatment.Effect))
 # gen.ceac.graph.sens(psa.sens)
 # 
 # evpi.s <- evpi.res %>% gather(Treatment.Effect, VoI, 2:4)
