@@ -6,7 +6,7 @@ source("PSA.R")
 source("CRASH-Mild R Model.R") # return to base case
 
 inner.loops <- 1000
-outer.loops <- 1000
+outer.loops <- 10000
 
 # Generate matrices for EVPPI results to be stored in
 
@@ -174,6 +174,16 @@ save(evppi.trial.long, file=paste("stored results/evppi.trial.",outer.loops, "."
 
 
 #### EVPPI for individual loops - 'Double Monte Carlo loop method' 
+
+
+inner.loops <- 1000
+outer.loops <- 1000
+
+inner.results <- matrix(0, inner.loops, 4)
+evppi.results.placebo <- matrix(0, ncol = length(lambda), nrow = outer.loops)
+colnames(evppi.results.placebo) <- as.character(lambda)
+evppi.results.txa <- evppi.results.placebo
+
 
 parameter.groups <- 7
 evppi.wide <- data.frame(lambda = lambda,
